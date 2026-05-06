@@ -1,50 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FISH — 漁</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    var { useState, useEffect, useCallback, useRef, useMemo } = React;
-
-    // Storage polyfill for GitHub Pages (uses localStorage)
-    if (typeof window.storage === 'undefined') {
-      window.storage = {
-        get: async function(key) {
-          var val = localStorage.getItem('fish_' + key);
-          return val ? { key: key, value: val } : null;
-        },
-        set: async function(key, value) {
-          localStorage.setItem('fish_' + key, value);
-          return { key: key, value: value };
-        },
-        delete: async function(key) {
-          localStorage.removeItem('fish_' + key);
-          return { key: key, deleted: true };
-        },
-        list: async function(prefix) {
-          var keys = [];
-          for (var i = 0; i < localStorage.length; i++) {
-            var k = localStorage.key(i);
-            if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', ''));
-          }
-          return { keys: keys };
-        }
-      };
-    }
-
-
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 var R=280, W=Math.sqrt(3)*R, INNER_R=110, OUTER_R=195;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -65,10 +19,11 @@ function rndFish(){var r=Math.random()*FISH_TW;for(var i=0;i<5;i++){r-=FISH[i].w
 // PROVINCES: corner hexes are single-fish provinces, middle hexes are mixed
 // Layout: hex0=topL, hex1=topM, hex2=topR, hex3=midL, hex4=midR, hex5=botL, hex6=botM, hex7=botR
 var MAP_PRESETS = {
-  random: {name:"Random Waters", desc:"Fish randomly distributed with natural rarity", icon:"🌊"},
+  random: {name:"Spots", desc:"Fish clustered in patches with natural rarity", icon:"🌊"},
   provinces: {name:"Provinces", desc:"Corner territories specialize in one catch. Interior waters are mixed.", icon:"🏯"},
   ladder: {name:"Ladder", desc:"Rarity scales 1x to 5x. Common fish everywhere, rare fish almost nowhere.", icon:"📊"},
-  threeKings: {name:"Three Kings", desc:"Only one of three rare species exists. The other two fill the seas in clusters.", icon:"👑"}
+  threeKings: {name:"Three Sisters", desc:"Only one of three rare species exists. The other two fill the seas in clusters.", icon:"👑"},
+  monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"}
 };
 
 function populateMap(mapType, nodes, sn) {
@@ -123,8 +78,15 @@ function populateMap(mapType, nodes, sn) {
       var bias=n.hi%2===0?commons[0]:commons[1];
       nf[n.id]=Math.random()<0.75?bias:commons[Math.floor(Math.random()*2)];
     });
+  } else if (mapType === "monoculture") {
+    // One random fish type fills the entire board
+    var monoType = Math.floor(Math.random() * 5);
+    nodes.forEach(function(n) {
+      if (n.type !== "small") return;
+      nf[n.id] = monoType;
+    });
   } else {
-    // Random with clusters
+    // Spots: Random with clusters
     var hexBias = {};
     for (var h = 0; h < 8; h++) {
       hexBias[h] = [Math.floor(Math.random() * 5), Math.floor(Math.random() * 5)];
@@ -154,9 +116,12 @@ function repopHex(nf, hexIdx, nodes, mapType) {
       hs.forEach(function(n) { nf[n.id] = rndFish(); });
     }
   } else if (mapType === "threeKings") {
-    // Repop with just the two common types (clustered)
-    // We don't know which are kings/commons so just use weighted random
     hs.forEach(function(n) { nf[n.id] = rndFish(); });
+  } else if (mapType === "monoculture") {
+    var counts=[0,0,0,0,0];
+    nodes.forEach(function(n){if(nf[n.id]!==null&&nf[n.id]!==undefined)counts[nf[n.id]]++;});
+    var dominant=0;for(var di=1;di<5;di++){if(counts[di]>counts[dominant])dominant=di;}
+    hs.forEach(function(n) { nf[n.id] = dominant; });
   } else {
     hs.forEach(function(n) { nf[n.id] = rndFish(); });
   }
@@ -303,12 +268,13 @@ function PlayerAnim(props){
   return null;
 }
 
-function FishGame(){
+export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
   var [numPlayers,setNumPlayers]=useState(4);
   var [mapType,setMapType]=useState("random");
   var [pn,setPn]=useState(["Player 1","Player 2","Player 3","Player 4"]);
+  var [cpuFlags,setCpuFlags]=useState([false,false,false,false]);
   var bd=useMemo(function(){return buildBoard();},[]);
   var nodes=bd.nodes, el=bd.el, adj=bd.adj;
   var [fm,setFm]=useState({});
@@ -334,12 +300,12 @@ function FishGame(){
   var [saveMsg,setSaveMsg]=useState("");
 
   function getGameState(){
-    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn});
+    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags});
   }
   function loadGameState(str){
     try{
       var s=JSON.parse(str);
-      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);
+      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);if(s.cpuFlags)setCpuFlags(s.cpuFlags);
       return true;
     }catch(e){return false;}
   }
@@ -381,7 +347,7 @@ function FishGame(){
     var initFish = populateMap(mapType, nodes, sn);
     setFm(initFish);
     var id={};cn.forEach(function(nId){id[nId]={};for(var f=0;f<5;f++)id[nId][f]={};});setCd(id);
-    var ps=[];for(var i=0;i<numPlayers;i++)ps.push({id:i,name:pn[i],position:sn[0],fish:[0,0,0,0,0],hasDouble:true,hasTriple:true,hasQuad:true});
+    var ps=[];for(var i=0;i<numPlayers;i++)ps.push({id:i,name:pn[i],position:sn[0],fish:[0,0,0,0,0],hasDouble:true,hasTriple:true,hasQuad:true,isCpu:cpuFlags[i]});
     setPlayers(ps);setCp(0);setCr(1);setPhase("playing");setTp("roll");setDiceValues([]);setEventAnim(null);setZoom(1);setPan({x:0,y:0});
   }
 
@@ -422,6 +388,168 @@ function FishGame(){
     },delay);
   }
 
+  // === CPU AI ENGINE ===
+  // Evaluate a node's value for pathfinding
+  function cpuNodeValue(nId, curFish, curFm, curCd) {
+    var node = nodes[nId];
+    if (node.type === "city") {
+      // Value of selling current cargo here
+      var totalVal = 0;
+      curFish.forEach(function(count, fti) {
+        if (count > 0) {
+          var existing = curCd[nId] && curCd[nId][fti] ? Object.values(curCd[nId][fti]).reduce(function(a,b){return a+b;},0) : 0;
+          totalVal += Math.round(100 * count / (existing + count));
+        }
+      });
+      return totalVal;
+    }
+    if (curFm[nId] !== null && curFm[nId] !== undefined && node.type === "small") {
+      // Fish value: rarer fish worth more
+      var ft = curFm[nId];
+      return [1, 2, 3, 5, 10][ft]; // Red=1, Gold=2, Jade=3, Blue=5, Purple=10
+    }
+    return 0;
+  }
+
+  // BFS to find best path of given length from a position
+  function cpuFindBestPath(startPos, moves, curFish, curFm, curCd, otherPlayerPos) {
+    // Explore all possible paths of exact length `moves`, pick highest value
+    var bestPath = null, bestScore = -1;
+    
+    function explore(path, movesLeft, simFish, simFm) {
+      if (movesLeft === 0 || nodes[path[path.length-1]].type === "city") {
+        // Score this path
+        var score = 0;
+        var tempFish = simFish.slice();
+        for (var pi = 1; pi < path.length; pi++) {
+          var nid = path[pi];
+          var nd = nodes[nid];
+          if (simFm[nid] !== null && simFm[nid] !== undefined && nd.type === "small") {
+            score += [1, 2, 3, 5, 10][simFm[nid]];
+          }
+          // Bonus for pirating through opponent
+          if (otherPlayerPos.indexOf(nid) >= 0 && pi < path.length - 1) {
+            score += 8; // piracy is valuable
+          }
+          if (nd.type === "city") {
+            score += cpuNodeValue(nid, tempFish, simFm, curCd) * 0.5;
+          }
+        }
+        // Penalize ending far from cities when carrying lots of fish
+        var totalCarrying = tempFish.reduce(function(a,b){return a+b;},0) + simFish.reduce(function(a,b){return a+b;},0);
+        if (totalCarrying > 6) {
+          // Find nearest city distance (rough)
+          var minCityDist = Infinity;
+          cn.forEach(function(cid) {
+            var d = dst([nodes[path[path.length-1]].x, nodes[path[path.length-1]].y], [nodes[cid].x, nodes[cid].y]);
+            if (d < minCityDist) minCityDist = d;
+          });
+          score -= minCityDist * 0.002;
+        }
+        // Prefer selling when carrying a lot
+        if (nodes[path[path.length-1]].type === "city" && totalCarrying > 3) {
+          score += totalCarrying * 3;
+        }
+        if (score > bestScore) { bestScore = score; bestPath = path.slice(); }
+        return;
+      }
+      var cur = path[path.length - 1];
+      var neighbors = (adj[cur] || []).filter(function(nid) {
+        if (path.indexOf(nid) >= 0 && cn.indexOf(nid) < 0) return false;
+        if (movesLeft === 1 && otherPlayerPos.indexOf(nid) >= 0 && cn.indexOf(nid) < 0) return false;
+        return true;
+      });
+      // Limit branching to avoid explosion — sample top candidates
+      if (neighbors.length > 6) {
+        neighbors.sort(function(a, b) {
+          return cpuNodeValue(b, simFish, simFm, curCd) - cpuNodeValue(a, simFish, simFm, curCd);
+        });
+        neighbors = neighbors.slice(0, 6);
+      }
+      neighbors.forEach(function(nid) {
+        var newFish = simFish.slice();
+        var newFm = Object.assign({}, simFm);
+        if (newFm[nid] !== null && newFm[nid] !== undefined && nodes[nid].type === "small") {
+          newFish[newFm[nid]]++;
+          newFm[nid] = null;
+        }
+        path.push(nid);
+        explore(path, movesLeft - 1, newFish, newFm);
+        path.pop();
+      });
+    }
+    
+    explore([startPos], moves, curFish.slice(), Object.assign({}, curFm));
+    return bestPath;
+  }
+
+  // CPU decides whether to use a dice multiplier
+  function cpuChooseMultiplier(player) {
+    var totalFish = player.fish.reduce(function(a,b){return a+b;},0);
+    // Use x4 when carrying lots of fish and need to reach a city
+    if (player.hasQuad && totalFish >= 8) return 4;
+    // Use x3 when moderate cargo
+    if (player.hasTriple && totalFish >= 5) return 3;
+    // Use x2 early game or when carrying some fish
+    if (player.hasDouble && totalFish >= 3) return 2;
+    // Random chance to use multiplier for variety
+    if (player.hasDouble && Math.random() < 0.15) return 2;
+    return 1;
+  }
+
+  // CPU turn execution
+  function cpuTakeTurn() {
+    var player = players[cp];
+    if (!player || !player.isCpu) return;
+    
+    if (tp === "roll") {
+      // Choose multiplier
+      var mult = cpuChooseMultiplier(player);
+      setDm(mult);
+      setTimeout(function() { rollD(); }, 800);
+    }
+  }
+
+  // After roll completes and we're in move phase, CPU picks path
+  function cpuExecuteMoves() {
+    var player = players[cp];
+    if (!player || !player.isCpu || tp !== "move" || ml <= 0) return;
+    
+    var otherP = players.filter(function(_, i) { return i !== cp; }).map(function(p) { return p.position; });
+    var bestPath = cpuFindBestPath(player.position, ml, player.fish, fm, cd, otherP);
+    
+    if (!bestPath || bestPath.length <= 1) return;
+    
+    // Execute moves one at a time with delays
+    var moveIdx = 1;
+    function doNextMove() {
+      if (moveIdx >= bestPath.length) return;
+      var nextNode = bestPath[moveIdx];
+      moveIdx++;
+      moveN(nextNode);
+      if (moveIdx < bestPath.length) {
+        setTimeout(doNextMove, 500);
+      }
+    }
+    setTimeout(doNextMove, 600);
+  }
+
+  // Trigger CPU actions
+  useEffect(function() {
+    if (phase !== "playing") return;
+    var player = players[cp];
+    if (!player || !player.isCpu) return;
+    
+    if (tp === "roll") {
+      var t1 = setTimeout(function() { cpuTakeTurn(); }, 1000);
+      return function() { clearTimeout(t1); };
+    }
+    if (tp === "move" && ml > 0) {
+      var t2 = setTimeout(function() { cpuExecuteMoves(); }, 800);
+      return function() { clearTimeout(t2); };
+    }
+  }, [phase, cp, tp, ml]);
+
   function moveN(nId){
     if(tp!=="move"||rn.indexOf(nId)<0)return;
     pushHistory();
@@ -434,10 +562,12 @@ function FishGame(){
       var hs=nodes.filter(function(n){return n.hi===node.hi&&n.type==="small";});
       if(hs.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;}))repopHex(nf, node.hi, nodes, mapType);
     }
-    var passedNodes=newPath.slice(1,-1);
-    np.forEach(function(pl,i){if(i===cp)return;if(passedNodes.indexOf(pl.position)>=0){
+    // Piracy: if the node you just moved TO has an opponent, steal immediately
+    // (you can't END on them, but you pass through them)
+    np.forEach(function(pl,i){if(i===cp)return;if(pl.position===nId){
       var st=pl.fish.reduce(function(a,b){return a+b;},0);
-      if(st>0){p.fish=p.fish.map(function(f,j){return f+pl.fish[j];});np[i]=Object.assign({},pl,{fish:[0,0,0,0,0]});setEventAnim({type:"pirate",thief:p.name,victim:pl.name,count:st});}}});
+      if(st>0){p.fish=p.fish.map(function(f,j){return f+pl.fish[j];});np[i]=Object.assign({},pl,{fish:[0,0,0,0,0]});setEventAnim({type:"pirate",thief:p.name,victim:pl.name,count:st,stolenFish:pl.fish.slice()});}
+    }});
     if(node.type==="city"){var fc=p.fish.slice();var tot=fc.reduce(function(a,b){return a+b;},0);
       if(tot>0){
         // Calculate current value of this sale
@@ -474,7 +604,7 @@ function FishGame(){
     var dx=n.x-boardCx,dy=n.y-boardCy;var d=Math.hypot(dx,dy)||1;var push=R*1.2;
     return{x:n.x+(dx/d)*push,y:n.y+(dy/d)*push};});},[cn,nodes]);
 
-  var NR=6;
+  var NR=9;
   var curNode=sp.length>0?sp[sp.length-1]:null;
 
   // Event overlay
@@ -493,18 +623,49 @@ function FishGame(){
           <div style={{fontFamily:"'Noto Serif JP',serif",fontSize:22,fontWeight:700,color:"#1a1a1a"}}>{"Port of "+eventAnim.city}</div>
           <div style={{display:"flex",gap:8,justifyContent:"center",marginTop:12}}>{fishDots}</div>
           <div style={{fontSize:13,color:"#8a7a6a",marginTop:8,fontWeight:500}}>Fish Sold</div>
-          {event.value!==undefined&&<div style={{fontSize:20,fontWeight:700,color:"#1a1a1a",marginTop:4}}>{"Current value: $"+event.value}</div>}
+          {eventAnim.value!==undefined&&<div style={{fontSize:20,fontWeight:700,color:"#1a1a1a",marginTop:4}}>{"Current value: $"+eventAnim.value}</div>}
         </div></div>;
     }else if(eventAnim.type==="pirate"){
+      // Build fish dots for the transfer animation
+      var transferDots=[];
+      if(eventAnim.stolenFish){
+        eventAnim.stolenFish.forEach(function(c,fi){
+          for(var dd=0;dd<Math.min(c,8);dd++){
+            var delay=(fi*0.3+dd*0.2);
+            transferDots.push(<div key={fi+"_"+dd} style={{
+              width:14,height:14,borderRadius:"50%",background:FISH[fi].color,
+              border:"2px solid #fff",position:"absolute",
+              left:"calc(25% + "+Math.random()*20+"px)",
+              top:"calc(40% + "+(fi*16+dd*4)+"px)",
+              animation:"fishTransfer 2s ease-in-out "+delay+"s both"
+            }}/>);
+          }
+        });
+      }
       eventEl=<div style={{position:"absolute",top:0,left:0,right:280,bottom:0,display:"flex",alignItems:"center",justifyContent:"center",pointerEvents:"none",zIndex:20}}>
-        <div style={{textAlign:"center",background:"rgba(240,230,211,0.95)",borderRadius:16,padding:"28px 40px",boxShadow:"0 8px 40px rgba(0,0,0,0.15)"}}>
-          <div style={{fontSize:56}}>🏴‍☠️</div>
-          <div style={{fontFamily:"'Noto Serif JP',serif",fontSize:22,fontWeight:700,color:"#1a1a1a",marginTop:4}}>PIRACY!</div>
-          <div style={{fontSize:14,color:"#D64045",fontWeight:600,marginTop:6}}>{eventAnim.thief+" plunders "+eventAnim.victim}</div>
-          <div style={{fontSize:28,fontWeight:700,color:"#1a1a1a",marginTop:4}}>+{eventAnim.count} fish stolen</div>
+        <div style={{position:"relative",width:320,height:220,background:"rgba(240,230,211,0.96)",borderRadius:16,padding:"24px",boxShadow:"0 8px 40px rgba(0,0,0,0.15)",overflow:"hidden"}}>
+          {/* Victim ship (left) */}
+          <div style={{position:"absolute",left:36,top:"50%",transform:"translateY(-50%)",textAlign:"center"}}>
+            <div style={{fontSize:36}}>⛵</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#1a1a1a",marginTop:4}}>{eventAnim.victim}</div>
+          </div>
+          {/* Thief ship (right) */}
+          <div style={{position:"absolute",right:36,top:"50%",transform:"translateY(-50%)",textAlign:"center"}}>
+            <div style={{fontSize:36}}>⛵</div>
+            <div style={{fontSize:11,fontWeight:700,color:"#1a1a1a",marginTop:4}}>{eventAnim.thief}</div>
+          </div>
+          {/* Arrow */}
+          <div style={{position:"absolute",top:"42%",left:"50%",transform:"translateX(-50%)",fontSize:24,color:"#c8b99a"}}>→</div>
+          {/* Flying fish dots */}
+          {transferDots}
+          {/* Count label */}
+          <div style={{position:"absolute",bottom:16,left:0,right:0,textAlign:"center"}}>
+            <span style={{fontSize:20,fontWeight:900,color:"#1a1a1a",fontFamily:"'Noto Serif JP',serif"}}>{eventAnim.count+" fish seized"}</span>
+          </div>
         </div></div>;
     }
-    setTimeout(evDone,2200);
+    var evDuration=eventAnim.type==="pirate"?4000:2200;
+    setTimeout(evDone,evDuration);
   }
 
   // SETUP
@@ -514,9 +675,15 @@ function FishGame(){
       (function(idx){
         playerInputs.push(
           <div key={idx}>
-            <label style={{fontSize:10,color:"#1a1a1a",textTransform:"uppercase",letterSpacing:2}}>{PSYM[idx]+" Player "+(idx+1)}</label>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
+              <label style={{fontSize:10,color:"#1a1a1a",textTransform:"uppercase",letterSpacing:2}}>{PSYM[idx]+" Player "+(idx+1)}</label>
+              <button onClick={function(){var nc=cpuFlags.slice();nc[idx]=!nc[idx];setCpuFlags(nc);if(!nc[idx]&&pn[idx].indexOf("CPU")===0){var np2=pn.slice();np2[idx]="Player "+(idx+1);setPn(np2);}if(nc[idx]){var np3=pn.slice();np3[idx]="CPU "+(idx+1);setPn(np3);}}}
+                style={{fontSize:8,padding:"2px 8px",borderRadius:3,cursor:"pointer",background:cpuFlags[idx]?"#1a1a1a":"#f5f0e8",border:"1px solid "+(cpuFlags[idx]?"#1a1a1a":"#c8b99a"),color:cpuFlags[idx]?"#fff":"#888",fontFamily:"'Noto Sans JP'",textTransform:"uppercase",letterSpacing:1}}>
+                {cpuFlags[idx]?"CPU":"Human"}
+              </button>
+            </div>
             <input value={pn[idx]} onChange={function(e){var np=pn.slice();np[idx]=e.target.value;setPn(np);}}
-              style={{display:"block",width:"100%",marginTop:4,background:"#fff",border:"1px solid #ccc",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:14,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/>
+              style={{display:"block",width:"100%",marginTop:4,background:cpuFlags[idx]?"#e8e0d0":"#fff",border:"1px solid #ccc",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:14,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/>
           </div>);
       })(pi);
     }
@@ -557,7 +724,7 @@ function FishGame(){
   return (
     <div style={{fontFamily:"'Noto Sans JP','Segoe UI',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
-      <style>{"@keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}} @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}}"}</style>
+      <style>{"@keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}} @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}} @keyframes pirateShake{0%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}100%{transform:rotate(0)}} @keyframes eventFadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}} @keyframes eventBounce{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}} @keyframes fishTransfer{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(100px) translateY(-15px);opacity:1}90%{opacity:0.8}100%{transform:translateX(180px);opacity:0}}"}</style>
 
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 16px",borderBottom:"1px solid #c8b99a",background:"#e8dcc8",flexShrink:0,zIndex:10}}>
         <span style={{fontFamily:"'Noto Serif JP'",fontWeight:700,fontSize:18,letterSpacing:2}}>FISH</span>
@@ -565,6 +732,7 @@ function FishGame(){
         <div style={{display:"flex",gap:6}}>
           {players.map(function(p,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:3,background:i===cp?"#1a1a1a12":"transparent",border:i===cp?"2px solid #1a1a1a":"2px solid transparent"}}>
             <span style={{fontSize:12}}>{PSYM[i]}</span><span style={{fontSize:11,fontWeight:i===cp?700:400}}>{p.name}</span>
+            {p.isCpu&&<span style={{fontSize:7,color:"#8a7a6a",background:"#d4c9b5",padding:"1px 3px",borderRadius:2}}>CPU</span>}
             <span style={{fontSize:10,color:"#8a7a6a"}}>{"$"+(liveScores[i]||0)}</span></div>;})}
         </div>
       </div>
@@ -615,7 +783,7 @@ function FishGame(){
               }
               var clickable=(tp==="move"&&rn.indexOf(node.id)>=0);
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
-                {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill="#1a1a1a"/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
+                {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill="#1a1a1a"/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
                 :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
                 :hasFish?<circle cx={node.x} cy={node.y} r={NR} fill={FISH[ft].color} stroke="#fff" strokeWidth={0.5}/>
                 :<circle cx={node.x} cy={node.y} r={NR*0.4} fill="#d4c9b5" stroke="#b8a890" strokeWidth={0.3}/>}
@@ -737,10 +905,3 @@ function FishGame(){
     </div>
   );
 }
-
-
-    var root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(FishGame));
-  </script>
-</body>
-</html>
