@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
-var R=280, W=Math.sqrt(3)*R, INNER_R=110, OUTER_R=195;
+var R=280, W=Math.sqrt(3)*R, MID_R=140;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
 var CITIES=["Yoko","Kobe","Naga","Hako","Shim","Sase","Niig","Otar"];
 var CFULL=["Yokohama","Kobe","Nagasaki","Hakodate","Shimizu","Sasebo","Niigata","Otaru"];
@@ -146,10 +146,8 @@ function buildBoard(){
     var cx=hc[0],cy=hc[1],h=[];
     h.push({x:cx,y:cy,type:"city",hi:hi});
     var i,v,m,d;
-    for(i=0;i<6;i++){v=hv(cx,cy,R,i);d=dst(v,[cx,cy]);h.push({x:cx+INNER_R*(v[0]-cx)/d,y:cy+INNER_R*(v[1]-cy)/d,type:"small",hi:hi});}
-    for(i=0;i<6;i++){m=hm(cx,cy,R,i);d=dst(m,[cx,cy]);h.push({x:cx+INNER_R*(m[0]-cx)/d,y:cy+INNER_R*(m[1]-cy)/d,type:"small",hi:hi});}
-    for(i=0;i<6;i++){v=hv(cx,cy,R,i);d=dst(v,[cx,cy]);h.push({x:cx+OUTER_R*(v[0]-cx)/d,y:cy+OUTER_R*(v[1]-cy)/d,type:"small",hi:hi});}
-    for(i=0;i<6;i++){m=hm(cx,cy,R,i);d=dst(m,[cx,cy]);h.push({x:cx+OUTER_R*(m[0]-cx)/d,y:cy+OUTER_R*(m[1]-cy)/d,type:"small",hi:hi});}
+    for(i=0;i<6;i++){v=hv(cx,cy,R,i);d=dst(v,[cx,cy]);h.push({x:cx+MID_R*(v[0]-cx)/d,y:cy+MID_R*(v[1]-cy)/d,type:"small",hi:hi});}
+    for(i=0;i<6;i++){m=hm(cx,cy,R,i);d=dst(m,[cx,cy]);h.push({x:cx+MID_R*(m[0]-cx)/d,y:cy+MID_R*(m[1]-cy)/d,type:"small",hi:hi});}
     for(i=0;i<6;i++){v=hv(cx,cy,R,i);h.push({x:v[0],y:v[1],type:"small",hi:hi});}
     for(i=0;i<6;i++){m=hm(cx,cy,R,i);h.push({x:m[0],y:m[1],type:"small",hi:hi});}
     ar.push.apply(ar,h);
@@ -167,16 +165,12 @@ function buildBoard(){
     var g=function(li){return mm.get(ro+li);};var i;
     for(i=0;i<6;i++){edges.add([g(0),g(1+i)].sort(srt).join(","));}
     for(i=0;i<6;i++){edges.add([g(0),g(7+i)].sort(srt).join(","));}
-    var io=[];for(i=0;i<6;i++){io.push(g(1+i));io.push(g(7+i));}
-    for(i=0;i<12;i++)edges.add([io[i],io[(i+1)%12]].sort(srt).join(","));
+    var cr=[];for(i=0;i<6;i++){cr.push(g(1+i));cr.push(g(7+i));}
+    for(i=0;i<12;i++)edges.add([cr[i],cr[(i+1)%12]].sort(srt).join(","));
     for(i=0;i<6;i++){edges.add([g(1+i),g(13+i)].sort(srt).join(","));}
     for(i=0;i<6;i++){edges.add([g(7+i),g(19+i)].sort(srt).join(","));}
-    var oo=[];for(i=0;i<6;i++){oo.push(g(13+i));oo.push(g(19+i));}
-    for(i=0;i<12;i++)edges.add([oo[i],oo[(i+1)%12]].sort(srt).join(","));
-    for(i=0;i<6;i++){edges.add([g(13+i),g(25+i)].sort(srt).join(","));}
-    for(i=0;i<6;i++){edges.add([g(19+i),g(31+i)].sort(srt).join(","));}
-    for(i=0;i<6;i++){edges.add([g(25+i),g(31+i)].sort(srt).join(","));edges.add([g(31+i),g(25+(i+1)%6)].sort(srt).join(","));}
-    ro+=37;
+    for(i=0;i<6;i++){edges.add([g(13+i),g(19+i)].sort(srt).join(","));edges.add([g(19+i),g(13+(i+1)%6)].sort(srt).join(","));}
+    ro+=25;
   });
   var el=Array.from(edges).map(function(e){return e.split(",").map(Number);});
   var adj={};nodes.forEach(function(n){adj[n.id]=[];});
@@ -208,9 +202,10 @@ function PlayerAnim(props){
   var x=props.x, y=props.y, pid=props.pid, active=props.active;
   var op=active?0.95:0.6, sw=active?1.6:1.0, spd=active?2:5;
   var C="#1a1a1a", R1=18, R2=12;
+  var innerFill=active?C:"none";
 
   if(pid===0){
-    var circles1=[];for(var i=0;i<6;i++){var a=i*Math.PI*2/6;circles1.push(<circle key={i} cx={x+R1*Math.cos(a)} cy={y+R1*Math.sin(a)} r={2.2} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>);}
+    var circles1=[];for(var i=0;i<6;i++){var a=i*Math.PI*2/6;circles1.push(<circle key={i} cx={x+R1*Math.cos(a)} cy={y+R1*Math.sin(a)} r={2.2} fill={active?C:"none"} stroke={C} strokeWidth={sw} opacity={op}/>);}
     var circles2=[];for(var i2=0;i2<4;i2++){var a2=i2*Math.PI*2/4;circles2.push(<circle key={i2} cx={x+R2*Math.cos(a2)} cy={y+R2*Math.sin(a2)} r={1.6} fill={C} opacity={op*0.7}/>);}
     return (<g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+spd+"s linear infinite"}}>{circles1}</g>
@@ -230,7 +225,7 @@ function PlayerAnim(props){
         <circle cx={x-R1*0.866} cy={y+R1*0.5} r={1.5} fill={C} opacity={op}/>
       </g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.8)+"s linear reverse infinite"}}>
-        <polygon points={tp2} fill="none" stroke={C} strokeWidth={sw*0.6} opacity={op*0.7}/>
+        <polygon points={tp2} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
@@ -247,7 +242,7 @@ function PlayerAnim(props){
         <circle cx={x-s1} cy={y+s1} r={1.5} fill={C} opacity={op}/>
       </g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.7)+"s linear reverse infinite"}}>
-        <rect x={x-s2} y={y-s2} width={s2*2} height={s2*2} fill="none" stroke={C} strokeWidth={sw*0.6} opacity={op*0.7}/>
+        <rect x={x-s2} y={y-s2} width={s2*2} height={s2*2} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
@@ -260,7 +255,7 @@ function PlayerAnim(props){
         <polygon points={starPts(x,y,R1)} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>
       </g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.6)+"s linear reverse infinite"}}>
-        <polygon points={starPts(x,y,R2)} fill="none" stroke={C} strokeWidth={sw*0.6} opacity={op*0.7}/>
+        <polygon points={starPts(x,y,R2)} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
@@ -751,7 +746,7 @@ export default function FishGame(){
             {HC.map(function(hc,i){var pts=[];for(var j=0;j<6;j++){var v=hv(hc[0],hc[1],R,j);pts.push(v[0]+","+v[1]);}
               return <polygon key={"h"+i} points={pts.join(" ")} fill="none" stroke="#c8b99a" strokeWidth={0.4}/>;
             })}
-            {HC.map(function(hc,i){return <g key={"c"+i}><circle cx={hc[0]} cy={hc[1]} r={OUTER_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/><circle cx={hc[0]} cy={hc[1]} r={INNER_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/></g>;})}
+            {HC.map(function(hc,i){return <circle key={"c"+i} cx={hc[0]} cy={hc[1]} r={MID_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/>;})}
             {el.map(function(pair,i){return <line key={i} x1={nodes[pair[0]].x} y1={nodes[pair[0]].y} x2={nodes[pair[1]].x} y2={nodes[pair[1]].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
 
             {cityLabelPos.map(function(lp,i){return <g key={"clo"+i}>
