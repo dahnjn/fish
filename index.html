@@ -1,50 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FISH — 漁</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    var { useState, useEffect, useCallback, useRef, useMemo } = React;
-
-    // Storage polyfill for GitHub Pages (uses localStorage)
-    if (typeof window.storage === 'undefined') {
-      window.storage = {
-        get: async function(key) {
-          var val = localStorage.getItem('fish_' + key);
-          return val ? { key: key, value: val } : null;
-        },
-        set: async function(key, value) {
-          localStorage.setItem('fish_' + key, value);
-          return { key: key, value: value };
-        },
-        delete: async function(key) {
-          localStorage.removeItem('fish_' + key);
-          return { key: key, deleted: true };
-        },
-        list: async function(prefix) {
-          var keys = [];
-          for (var i = 0; i < localStorage.length; i++) {
-            var k = localStorage.key(i);
-            if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', ''));
-          }
-          return { keys: keys };
-        }
-      };
-    }
-
-
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 var R=280, W=Math.sqrt(3)*R, INNER_R=110, OUTER_R=195;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -314,7 +268,7 @@ function PlayerAnim(props){
   return null;
 }
 
-function FishGame(){
+export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
   var [numPlayers,setNumPlayers]=useState(4);
@@ -552,7 +506,7 @@ function FishGame(){
       // Choose multiplier
       var mult = cpuChooseMultiplier(player);
       setDm(mult);
-      setTimeout(function() { rollD(); }, 800);
+      setTimeout(function() { rollD(); }, 200);
     }
   }
 
@@ -574,10 +528,10 @@ function FishGame(){
       moveIdx++;
       moveN(nextNode);
       if (moveIdx < bestPath.length) {
-        setTimeout(doNextMove, 500);
+        setTimeout(doNextMove, 120);
       }
     }
-    setTimeout(doNextMove, 600);
+    setTimeout(doNextMove, 150);
   }
 
   // Trigger CPU actions
@@ -587,11 +541,11 @@ function FishGame(){
     if (!player || !player.isCpu) return;
     
     if (tp === "roll") {
-      var t1 = setTimeout(function() { cpuTakeTurn(); }, 1000);
+      var t1 = setTimeout(function() { cpuTakeTurn(); }, 300);
       return function() { clearTimeout(t1); };
     }
     if (tp === "move" && ml > 0) {
-      var t2 = setTimeout(function() { cpuExecuteMoves(); }, 800);
+      var t2 = setTimeout(function() { cpuExecuteMoves(); }, 200);
       return function() { clearTimeout(t2); };
     }
   }, [phase, cp, tp, ml]);
@@ -951,10 +905,3 @@ function FishGame(){
     </div>
   );
 }
-
-
-    var root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(React.createElement(FishGame));
-  </script>
-</body>
-</html>
