@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-
+ 
 var R=280, W=Math.sqrt(3)*R, INNER_R=110, OUTER_R=195;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
 var CITIES=["Yoko","Kobe","Naga","Hako","Shim","Sase","Niig","Otar"];
@@ -14,7 +14,7 @@ var FISH=[
 ];
 var FISH_TW=FISH.reduce(function(s,f){return s+f.weight;},0);
 function rndFish(){var r=Math.random()*FISH_TW;for(var i=0;i<5;i++){r-=FISH[i].weight;if(r<=0)return i;}return 4;}
-
+ 
 // Map presets
 // PROVINCES: corner hexes are single-fish provinces, middle hexes are mixed
 // Layout: hex0=topL, hex1=topM, hex2=topR, hex3=midL, hex4=midR, hex5=botL, hex6=botM, hex7=botR
@@ -25,7 +25,7 @@ var MAP_PRESETS = {
   threeKings: {name:"Three Sisters", desc:"Only one of three rare species exists. The other two fill the seas in clusters.", icon:"👑"},
   monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"}
 };
-
+ 
 function populateMap(mapType, nodes, sn) {
   var nf = {};
   var sid = sn[0];
@@ -104,7 +104,7 @@ function populateMap(mapType, nodes, sn) {
   if (sid !== undefined) nf[sid] = null;
   return nf;
 }
-
+ 
 // Repopulate a single hex when depleted
 function repopHex(nf, hexIdx, nodes, mapType) {
   var hs = nodes.filter(function(n) { return n.hi === hexIdx && n.type === "small"; });
@@ -135,11 +135,11 @@ var FISH_IMG = [
   "data:image/png;base64,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",
   "data:image/png;base64,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",
 ];
-
+ 
 function hv(cx,cy,r,i){var a=Math.PI/2-i*Math.PI/3;return[cx+r*Math.cos(a),cy-r*Math.sin(a)];}
 function hm(cx,cy,r,i){var v1=hv(cx,cy,r,i),v2=hv(cx,cy,r,(i+1)%6);return[(v1[0]+v2[0])/2,(v1[1]+v2[1])/2];}
 function dst(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
-
+ 
 function buildBoard(){
   var edges=new Set(),mm=new Map(),nodes=[],ar=[];
   HC.forEach(function(hc,hi){
@@ -183,7 +183,7 @@ function buildBoard(){
   el.forEach(function(p){var a=p[0],b=p[1];if(adj[a]&&adj[b]){if(adj[a].indexOf(b)<0)adj[a].push(b);if(adj[b].indexOf(a)<0)adj[b].push(a);}});
   return{nodes:nodes,el:el,adj:adj};
 }
-
+ 
 function DiceFace(props){
   var value=props.value, size=props.size||44;
   var dots=DD[value]||[],s=size,r2=s*0.12,g=s*0.25;
@@ -194,7 +194,7 @@ function DiceFace(props){
     </svg>
   );
 }
-
+ 
 function calcPrices(cd,cn){
   var p={};cn.forEach(function(cid){p[cid]={};for(var ft=0;ft<5;ft++){var del=cd[cid]&&cd[cid][ft]?cd[cid][ft]:{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);p[cid][ft]=tot>0?Math.round(100/tot):100;}});return p;
 }
@@ -203,12 +203,12 @@ function calcScores(cd,cn,np){
   cn.forEach(function(cid){var c=cd[cid]||{};for(var ft=0;ft<5;ft++){var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
     if(tot>0)Object.entries(del).forEach(function(e){sc[Number(e[0])]+=Math.round(100*e[1]/tot);});}});return sc;
 }
-
+ 
 function PlayerAnim(props){
   var x=props.x, y=props.y, pid=props.pid, active=props.active;
   var op=active?0.95:0.6, sw=active?1.6:1.0, spd=active?2:5;
   var C="#1a1a1a", R1=18, R2=12;
-
+ 
   if(pid===0){
     var circles1=[];for(var i=0;i<6;i++){var a=i*Math.PI*2/6;circles1.push(<circle key={i} cx={x+R1*Math.cos(a)} cy={y+R1*Math.sin(a)} r={2.2} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>);}
     var circles2=[];for(var i2=0;i2<4;i2++){var a2=i2*Math.PI*2/4;circles2.push(<circle key={i2} cx={x+R2*Math.cos(a2)} cy={y+R2*Math.sin(a2)} r={1.6} fill={C} opacity={op*0.7}/>);}
@@ -218,7 +218,7 @@ function PlayerAnim(props){
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
-
+ 
   if(pid===1){
     var tp1=x+","+(y-R1)+" "+(x+R1*0.866)+","+(y+R1*0.5)+" "+(x-R1*0.866)+","+(y+R1*0.5);
     var tp2=x+","+(y-R2)+" "+(x+R2*0.866)+","+(y+R2*0.5)+" "+(x-R2*0.866)+","+(y+R2*0.5);
@@ -235,7 +235,7 @@ function PlayerAnim(props){
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
-
+ 
   if(pid===2){
     var s1=R1*0.707, s2=R2*0.707;
     return (<g>
@@ -252,7 +252,7 @@ function PlayerAnim(props){
       {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
-
+ 
   if(pid===3){
     var starPts=function(scx,scy,sr){var coords=[];for(var si=0;si<10;si++){var sa=Math.PI/2+si*Math.PI/5;var srr=si%2===0?sr:sr*0.45;coords.push((scx+srr*Math.cos(sa))+","+(scy-srr*Math.sin(sa)));}return coords.join(" ");};
     return (<g>
@@ -267,7 +267,7 @@ function PlayerAnim(props){
   }
   return null;
 }
-
+ 
 export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
@@ -298,7 +298,7 @@ export default function FishGame(){
   var [sideTab,setSideTab]=useState("score");
   var [history,setHistory]=useState([]);
   var [saveMsg,setSaveMsg]=useState("");
-
+ 
   function getGameState(){
     return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags});
   }
@@ -333,16 +333,16 @@ export default function FishGame(){
       }else{setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
     }catch(e){setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
   }
-
+ 
   var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   nodes.forEach(function(n){if(n.x<minX)minX=n.x;if(n.y<minY)minY=n.y;if(n.x>maxX)maxX=n.x;if(n.y>maxY)maxY=n.y;});
   var vbx=minX-160,vby=minY-100,vbw=maxX-minX+320,vbh=maxY-minY+200;
-
+ 
   var sn=useMemo(function(){return nodes.filter(function(n){return n.type==="start";}).map(function(n){return n.id;});},[nodes]);
   var cn=useMemo(function(){return nodes.filter(function(n){return n.type==="city";}).map(function(n){return n.id;});},[nodes]);
   var prices=useMemo(function(){return calcPrices(cd,cn);},[cd,cn]);
   var liveScores=useMemo(function(){return calcScores(cd,cn,numPlayers);},[cd,cn,numPlayers]);
-
+ 
   function startGame(){
     var initFish = populateMap(mapType, nodes, sn);
     setFm(initFish);
@@ -350,7 +350,7 @@ export default function FishGame(){
     var ps=[];for(var i=0;i<numPlayers;i++)ps.push({id:i,name:pn[i],position:sn[0],fish:[0,0,0,0,0],hasDouble:true,hasTriple:true,hasQuad:true,isCpu:cpuFlags[i]});
     setPlayers(ps);setCp(0);setCr(1);setPhase("playing");setTp("roll");setDiceValues([]);setEventAnim(null);setZoom(1);setPan({x:0,y:0});
   }
-
+ 
   function rollD(){
     if(tp!=="roll")return;pushHistory();setDiceAnim(true);var count=0;
     var interval=setInterval(function(){
@@ -365,9 +365,9 @@ export default function FishGame(){
           setDm(1);},600);}
     },80);animRef.current=interval;
   }
-
+ 
   var otherPos=useMemo(function(){return players.filter(function(_,i){return i!==cp;}).map(function(p){return p.position;}).filter(function(p){return p!==null;});},[players,cp]);
-
+ 
   var rn=useMemo(function(){
     if(tp!=="move"||ml<=0)return[];
     var cur=sp[sp.length-1];if(cur===undefined||cur===null)return[];
@@ -377,7 +377,7 @@ export default function FishGame(){
       return true;
     });
   },[tp,ml,sp,adj,cn,otherPos]);
-
+ 
   function doEndTurn(pls,delay){
     if(!delay)delay=300;
     setTp("done");
@@ -387,7 +387,7 @@ export default function FishGame(){
       setCp(next);setCr(nr);setDiceValues([]);setMl(0);setSp([]);setTp("roll");
     },delay);
   }
-
+ 
   // === CPU AI ENGINE ===
   // Evaluate a node's value for pathfinding
   function cpuNodeValue(nId, curFish, curFm, curCd) {
@@ -410,7 +410,7 @@ export default function FishGame(){
     }
     return 0;
   }
-
+ 
   // BFS to find best path of given length from a position
   function cpuFindBestPath(startPos, moves, curFish, curFm, curCd, otherPlayerPos) {
     // Explore all possible paths of exact length `moves`, pick highest value
@@ -482,7 +482,7 @@ export default function FishGame(){
     explore([startPos], moves, curFish.slice(), Object.assign({}, curFm));
     return bestPath;
   }
-
+ 
   // CPU decides whether to use a dice multiplier
   function cpuChooseMultiplier(player) {
     var totalFish = player.fish.reduce(function(a,b){return a+b;},0);
@@ -496,7 +496,7 @@ export default function FishGame(){
     if (player.hasDouble && Math.random() < 0.15) return 2;
     return 1;
   }
-
+ 
   // CPU turn execution
   function cpuTakeTurn() {
     var player = players[cp];
@@ -509,7 +509,7 @@ export default function FishGame(){
       setTimeout(function() { rollD(); }, 800);
     }
   }
-
+ 
   // After roll completes and we're in move phase, CPU picks path
   function cpuExecuteMoves() {
     var player = players[cp];
@@ -533,7 +533,7 @@ export default function FishGame(){
     }
     setTimeout(doNextMove, 600);
   }
-
+ 
   // Trigger CPU actions
   useEffect(function() {
     if (phase !== "playing") return;
@@ -549,7 +549,7 @@ export default function FishGame(){
       return function() { clearTimeout(t2); };
     }
   }, [phase, cp, tp, ml]);
-
+ 
   function moveN(nId){
     if(tp!=="move"||rn.indexOf(nId)<0)return;
     pushHistory();
@@ -584,7 +584,7 @@ export default function FishGame(){
         setEventAnim({type:"sell",city:CFULL[cn.indexOf(nId)],fishCounts:fc,value:saleValue});p.fish=[0,0,0,0,0];}ended=true;setCd(nd);}
     np[cp]=p;setPlayers(np);setFm(nf);var newMl=ml-1;setMl(newMl);if(ended||newMl<=0)doEndTurn(np,ended?2400:300);
   }
-
+ 
   var fs=useMemo(function(){
     if(phase!=="gameover")return null;var sc=[];for(var k=0;k<numPlayers;k++)sc.push(0);
     cn.forEach(function(cid){var c=cd[cid]||{};var alloc=0;var pc=[];for(var k2=0;k2<numPlayers;k2++)pc.push(0);
@@ -592,21 +592,21 @@ export default function FishGame(){
         if(tot>0)Object.entries(del).forEach(function(e){var sh=Math.round(100*e[1]/tot);sc[Number(e[0])]+=sh;pc[Number(e[0])]+=Number(e[1]);alloc+=sh;});}
       var un=500-alloc;if(un>0){var mf=0,mp=-1;pc.forEach(function(c2,i){if(c2>mf){mf=c2;mp=i;}});if(mp>=0)sc[mp]+=un;}});return sc;
   },[phase,cd,cn,numPlayers]);
-
+ 
   var handleW=useCallback(function(e){e.preventDefault();setZoom(function(z){return Math.min(5,Math.max(0.3,z*(e.deltaY>0?0.9:1.1)));});},[]);
   var handlePD=useCallback(function(e){if(e.button===1||(e.button===0&&e.altKey)){setIsP(true);pr.current={sx:e.clientX,sy:e.clientY,ox:pan.x,oy:pan.y};e.preventDefault();}},[pan]);
   var handlePM=useCallback(function(e){if(!isP)return;setPan({x:pr.current.ox+(e.clientX-pr.current.sx),y:pr.current.oy+(e.clientY-pr.current.sy)});},[isP]);
   var handlePU=useCallback(function(){setIsP(false);},[]);
   useEffect(function(){return function(){if(animRef.current)clearInterval(animRef.current);};},[]);
-
+ 
   var cityLabelPos=useMemo(function(){return cn.map(function(nId,i){
     var n=nodes[nId];var boardCx=W,boardCy=1.5*R;
     var dx=n.x-boardCx,dy=n.y-boardCy;var d=Math.hypot(dx,dy)||1;var push=R*1.2;
     return{x:n.x+(dx/d)*push,y:n.y+(dy/d)*push};});},[cn,nodes]);
-
+ 
   var NR=9;
   var curNode=sp.length>0?sp[sp.length-1]:null;
-
+ 
   // Event overlay
   var eventEl=null;
   if(eventAnim){
@@ -667,7 +667,7 @@ export default function FishGame(){
     var evDuration=eventAnim.type==="pirate"?4000:2200;
     setTimeout(evDone,evDuration);
   }
-
+ 
   // SETUP
   if(phase==="setup"){
     var playerInputs=[];
@@ -716,16 +716,16 @@ export default function FishGame(){
           <button onClick={startGame} style={{marginTop:12,padding:"14px",borderRadius:4,background:"#2a2a2a",border:"none",color:"#fff",fontSize:16,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>START</button>
         </div></div>);
   }
-
+ 
   // GAME
   var activeDice=diceAnim?animFace:[];
   var scores=phase==="gameover"?fs:liveScores;
-
+ 
   return (
     <div style={{fontFamily:"'Noto Sans JP','Segoe UI',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
       <style>{"@keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}} @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}} @keyframes pirateShake{0%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}100%{transform:rotate(0)}} @keyframes eventFadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}} @keyframes eventBounce{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}} @keyframes fishTransfer{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(100px) translateY(-15px);opacity:1}90%{opacity:0.8}100%{transform:translateX(180px);opacity:0}}"}</style>
-
+ 
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 16px",borderBottom:"1px solid #c8b99a",background:"#e8dcc8",flexShrink:0,zIndex:10}}>
         <span style={{fontFamily:"'Noto Serif JP'",fontWeight:700,fontSize:18,letterSpacing:2}}>FISH</span>
         <span style={{fontSize:11,color:"#999"}}>{"Round "+cr+"/"+numRounds}</span>
@@ -736,7 +736,7 @@ export default function FishGame(){
             <span style={{fontSize:10,color:"#8a7a6a"}}>{"$"+(liveScores[i]||0)}</span></div>;})}
         </div>
       </div>
-
+ 
       <div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
         {eventEl}
         <div onWheel={handleW} onPointerDown={handlePD} onPointerMove={handlePM} onPointerUp={handlePU} onPointerLeave={handlePU} onContextMenu={function(e){e.preventDefault();}}
@@ -746,27 +746,27 @@ export default function FishGame(){
             <button onClick={function(){setZoom(function(z){return Math.max(0.3,z*0.7);});}} style={{width:28,height:28,borderRadius:4,border:"1px solid #c8b99a",background:"#e8dcc8",fontSize:16,cursor:"pointer",color:"#333"}}>-</button>
             <button onClick={function(){setZoom(1);setPan({x:0,y:0});}} style={{height:28,borderRadius:4,border:"1px solid #c8b99a",padding:"0 6px",background:"#e8dcc8",fontSize:9,cursor:"pointer",color:"#333"}}>FIT</button>
           </div>
-
+ 
           <svg viewBox={vbx+" "+vby+" "+vbw+" "+vbh} style={{maxWidth:"100%",maxHeight:"calc(100vh - 46px)",transform:"scale("+zoom+") translate("+(pan.x/zoom)+"px,"+(pan.y/zoom)+"px)",transformOrigin:"center center"}}>
             {HC.map(function(hc,i){var pts=[];for(var j=0;j<6;j++){var v=hv(hc[0],hc[1],R,j);pts.push(v[0]+","+v[1]);}
               return <polygon key={"h"+i} points={pts.join(" ")} fill="none" stroke="#c8b99a" strokeWidth={0.4}/>;
             })}
             {HC.map(function(hc,i){return <g key={"c"+i}><circle cx={hc[0]} cy={hc[1]} r={OUTER_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/><circle cx={hc[0]} cy={hc[1]} r={INNER_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/></g>;})}
             {el.map(function(pair,i){return <line key={i} x1={nodes[pair[0]].x} y1={nodes[pair[0]].y} x2={nodes[pair[1]].x} y2={nodes[pair[1]].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
-
+ 
             {cityLabelPos.map(function(lp,i){return <g key={"clo"+i}>
               <text x={lp.x} y={lp.y-5} textAnchor="middle" fill="#1a1a1a" fontSize={18} fontFamily="'Noto Serif JP',serif" fontWeight={900}>{CFULL[i]}</text>
               <text x={lp.x} y={lp.y+11} textAnchor="middle" fill="#5a4a3a" fontSize={11} fontFamily="'Noto Serif JP',serif">{CJP[i]}</text>
             </g>;})}
-
+ 
             {sp.length>1&&sp.map(function(nId,i){if(i===0)return null;var pv=nodes[sp[i-1]],cu=nodes[nId];return <line key={"p"+i} x1={pv.x} y1={pv.y} x2={cu.x} y2={cu.y} stroke="#1a1a1a" strokeWidth={1.5} strokeOpacity={0.4}/>;})}
-
+ 
             {curNode!==null&&rn.map(function(nId){var from=nodes[curNode],to=nodes[nId];
               return <g key={"rd"+nId} style={{cursor:"pointer"}} onClick={function(){moveN(nId);}}>
                 <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="transparent" strokeWidth={6}/>
                 <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#1a1a1a" strokeWidth={1} strokeDasharray="2,2" opacity={0.5}/>
               </g>;})}
-
+ 
             {nodes.map(function(node){
               var ft=fm[node.id];var hasFish=ft!==null&&ft!==undefined;
               var isCity=node.type==="city";var isStart=node.type==="start";
@@ -789,14 +789,14 @@ export default function FishGame(){
                 :<circle cx={node.x} cy={node.y} r={NR*0.4} fill="#d4c9b5" stroke="#b8a890" strokeWidth={0.3}/>}
               </g>;
             })}
-
+ 
             {players.filter(function(p){return p.position!==null;}).map(function(p){
               var nd=nodes[p.position];
               return <PlayerAnim key={"pa"+p.id} x={nd.x} y={nd.y} pid={p.id} active={p.id===cp&&phase==="playing"}/>;
             })}
           </svg>
         </div>
-
+ 
         <div style={{width:280,borderLeft:"1px solid #c8b99a",background:"#e8dcc8",display:"flex",flexDirection:"column",flexShrink:0}}>
           <div style={{padding:10,borderBottom:"1px solid #d4c9b5"}}>
             <div style={{fontSize:14,fontWeight:700,color:"#1a1a1a",fontFamily:"'Noto Serif JP'",marginBottom:6}}>{PSYM[cp]+" "+(players[cp]?players[cp].name:"")}</div>
@@ -822,11 +822,11 @@ export default function FishGame(){
                 <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={28}/>;})}</div>
                 <span style={{fontSize:13,fontWeight:700,color:"#1B9E77"}}>{"Moves: "+ml}</span></div>)}
           </div>
-
+ 
           <div style={{display:"flex",borderBottom:"1px solid #d4c9b5"}}>
             {["score","market","fish"].map(function(t){return <button key={t} onClick={function(){setSideTab(t);}} style={{flex:1,padding:"6px",fontSize:9,fontWeight:sideTab===t?700:400,background:sideTab===t?"#f0e6d3":"transparent",border:"none",borderBottom:sideTab===t?"2px solid #1a1a1a":"2px solid transparent",cursor:"pointer",textTransform:"uppercase",letterSpacing:1,color:"#1a1a1a"}}>{t}</button>;})}
           </div>
-
+ 
           {sideTab==="score"&&(
             <div style={{flex:1,overflow:"auto",padding:8}}>
               <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Live Standings</div>
@@ -837,7 +837,7 @@ export default function FishGame(){
                   <span style={{fontSize:14,fontWeight:700}}>{"$"+item.sc}</span></div>;})}
               {phase==="gameover"&&<div style={{textAlign:"center",marginTop:16,fontFamily:"'Noto Serif JP'",fontSize:16,fontWeight:700,letterSpacing:2}}>GAME OVER</div>}
             </div>)}
-
+ 
           {sideTab==="market"&&(
             <div style={{flex:1,overflow:"auto",padding:6}}>
               {cn.map(function(cid,ci){
@@ -852,7 +852,7 @@ export default function FishGame(){
                         {tot>0&&<span style={{color:"#8a7a6a",fontSize:8}}>{"("+tot+")"}</span>}</div>;})}
                   </div></div>;})}
             </div>)}
-
+ 
           {sideTab==="fish"&&(
             <div style={{flex:1,overflow:"auto",padding:8}}>
               <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Species Guide</div>
@@ -882,7 +882,7 @@ export default function FishGame(){
                 </div>;
               })}
             </div>)}
-
+ 
           <div style={{padding:8,borderTop:"1px solid #d4c9b5"}}>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
               {FISH.map(function(ft,i){
@@ -905,3 +905,4 @@ export default function FishGame(){
     </div>
   );
 }
+ 
