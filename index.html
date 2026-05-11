@@ -1,31 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FISH</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #root { height: 100%%; width: 100%%; overflow: hidden; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    var { useState, useEffect, useCallback, useRef, useMemo } = React;
-    if (typeof window.storage === 'undefined') {
-      window.storage = {
-        get: async function(key) { try { var val = localStorage.getItem('fish_' + key); return val ? { key: key, value: val } : null; } catch(e) { return null; } },
-        set: async function(key, value) { try { localStorage.setItem('fish_' + key, value); return { key: key, value: value }; } catch(e) { return null; } },
-        delete: async function(key) { try { localStorage.removeItem('fish_' + key); return { key: key, deleted: true }; } catch(e) { return null; } },
-        list: async function(prefix) { var keys = []; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', '')); } } catch(e) {} return { keys: keys }; }
-      };
-    }
-
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 var R=280, W=Math.sqrt(3)*R, MID_R=140;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -51,7 +24,8 @@ var MAP_PRESETS = {
   provinces: {name:"Provinces", desc:"Corner territories specialize in one catch. Interior waters are mixed.", icon:"🏯"},
   ladder: {name:"Ladder", desc:"Rarity scales 1x to 5x. Common fish everywhere, rare fish almost nowhere.", icon:"📊"},
   threeKings: {name:"Three Sisters", desc:"Only one of three rare species exists. The other two fill the seas in clusters.", icon:"👑"},
-  monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"}
+  monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"},
+  cod: {name:"Cod", desc:"Black Cod in diamonds + interior hexes. Each outer hex has one species only.", icon:"🖤"}
 };
 
 function populateMap(mapType, nodes, sn, diamondNodeIds) {
@@ -107,11 +81,22 @@ function populateMap(mapType, nodes, sn, diamondNodeIds) {
       nf[n.id]=Math.random()<0.75?bias:commons[Math.floor(Math.random()*2)];
     });
   } else if (mapType === "monoculture") {
-    // One random fish type fills the entire board
     var monoType = Math.floor(Math.random() * 5);
     nodes.forEach(function(n) {
       if (n.type !== "small") return;
       nf[n.id] = monoType;
+    });
+  } else if (mapType === "cod") {
+    // COD map: interior hexes (3=Hako, 4=Shim) get Black Cod
+    // Outer hexes each get one species exclusively:
+    // hex0=Red(0), hex1=Gold(1), hex2=Jade(2), hex5=Blue(3), hex6=Purp(4), hex7=Red(0)... 
+    // Actually: 6 outer hexes, 5 regular species. hex0=Red, hex1=Gold, hex2=Jade, hex5=Blue, hex6=Purp, hex7=Gold
+    var codHexMap = {0:0, 1:1, 2:2, 3:5, 4:5, 5:3, 6:4, 7:1};
+    nodes.forEach(function(n) {
+      if (n.type !== "small") return;
+      if (codHexMap[n.hi] !== undefined) {
+        nf[n.id] = codHexMap[n.hi];
+      }
     });
   } else {
     // Spots: Random with clusters
@@ -437,7 +422,7 @@ function PlayerAnim(props){
   return null;
 }
 
-function FishGame(){
+export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
   var [blackCodBonus,setBlackCodBonus]=useState(500);
@@ -908,40 +893,36 @@ function FishGame(){
               </button>
             </div>
             <input value={pn[idx]} onChange={function(e){var np=pn.slice();np[idx]=e.target.value;setPn(np);}}
-              style={{display:"block",width:"100%",marginTop:4,background:cpuFlags[idx]?"#e8e0d0":"#fff",border:"1px solid #ccc",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:14,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/>
+              style={{display:"block",width:"100%",marginTop:2,background:cpuFlags[idx]?"#e8e0d0":"#fff",border:"1px solid #ccc",borderRadius:4,color:"#2a2a2a",padding:"6px 8px",fontSize:13,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/>
           </div>);
       })(pi);
     }
     return (
-      <div style={{fontFamily:"'Noto Sans JP','Segoe UI',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{fontFamily:"'Noto Sans JP','Segoe UI',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",padding:12,overflow:"auto"}}>
         <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
-        <h1 style={{fontFamily:"'Noto Serif JP',serif",fontSize:56,fontWeight:700,color:"#1a1a1a",marginBottom:4,letterSpacing:4}}>FISH</h1>
-        <p style={{color:"#888",marginBottom:40,fontSize:13,letterSpacing:2}}>漁 — catch, steal, sell</p>
-        <div style={{width:340,display:"flex",flexDirection:"column",gap:14}}>
-          <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Black Cod Bonus ($)</label>
-          <input type="number" min="0" max="5000" value={blackCodBonus} onChange={function(e){setBlackCodBonus(Math.max(0,parseInt(e.target.value)||0));}}
-            style={{display:"block",width:"100%",marginTop:4,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:15,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
-        <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Rounds</label>
-            <input type="number" min="1" max="50" value={numRounds} onChange={function(e){setNumRounds(Math.max(1,parseInt(e.target.value)||1));}}
-              style={{display:"block",width:"100%",marginTop:4,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:15,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
-          <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Map</label>
-            <div style={{display:"flex",flexDirection:"column",gap:6,marginTop:4}}>
-              {Object.keys(MAP_PRESETS).map(function(key){var mp=MAP_PRESETS[key];return(
-                <button key={key} onClick={function(){setMapType(key);}} style={{
-                  display:"flex",alignItems:"center",gap:8,padding:"8px 12px",borderRadius:4,textAlign:"left",cursor:"pointer",
-                  background:mapType===key?"#2a2a2a":"#fff",border:"1px solid "+(mapType===key?"#2a2a2a":"#ddd"),color:mapType===key?"#fff":"#2a2a2a",
-                  fontFamily:"'Noto Sans JP'",fontSize:12,transition:"all 0.15s"}}>
-                  <span style={{fontSize:18}}>{mp.icon}</span>
-                  <div><div style={{fontWeight:700,fontSize:13}}>{mp.name}</div><div style={{fontSize:9,opacity:0.7,marginTop:1}}>{mp.desc}</div></div>
-                </button>);})}
-            </div>
+        <h1 style={{fontFamily:"'Noto Serif JP',serif",fontSize:36,fontWeight:700,color:"#1a1a1a",marginBottom:0,marginTop:12,letterSpacing:4}}>FISH</h1>
+        <p style={{color:"#888",marginBottom:12,fontSize:11,letterSpacing:2}}>漁 — catch, steal, sell</p>
+        <div style={{width:340,display:"flex",flexDirection:"column",gap:8}}>
+          <div style={{display:"flex",gap:8}}>
+            <div style={{flex:1}}><label style={{fontSize:9,color:"#999",textTransform:"uppercase",letterSpacing:1}}>Rounds</label>
+              <input type="number" min="1" max="50" value={numRounds} onChange={function(e){setNumRounds(Math.max(1,parseInt(e.target.value)||1));}}
+                style={{display:"block",width:"100%",marginTop:2,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"6px 8px",fontSize:14,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
+            <div style={{flex:1}}><label style={{fontSize:9,color:"#999",textTransform:"uppercase",letterSpacing:1}}>Cod Bonus $</label>
+              <input type="number" min="0" max="5000" value={blackCodBonus} onChange={function(e){setBlackCodBonus(Math.max(0,parseInt(e.target.value)||0));}}
+                style={{display:"block",width:"100%",marginTop:2,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"6px 8px",fontSize:14,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
+            <div style={{flex:1}}><label style={{fontSize:9,color:"#999",textTransform:"uppercase",letterSpacing:1}}>Players</label>
+              <div style={{display:"flex",gap:3,marginTop:2}}>
+                {[2,3,4].map(function(n){return <button key={n} onClick={function(){setNumPlayers(n);}} style={{flex:1,padding:"6px",borderRadius:4,background:numPlayers===n?"#2a2a2a":"#fff",border:"1px solid #ddd",color:numPlayers===n?"#fff":"#2a2a2a",fontSize:13,cursor:"pointer",fontFamily:"'Noto Sans JP'"}}>{n}</button>;})}
+              </div></div>
           </div>
-          <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Players</label>
-            <div style={{display:"flex",gap:6,marginTop:4}}>
-              {[2,3,4].map(function(n){return <button key={n} onClick={function(){setNumPlayers(n);}} style={{flex:1,padding:"10px",borderRadius:4,background:numPlayers===n?"#2a2a2a":"#fff",border:"1px solid #ddd",color:numPlayers===n?"#fff":"#2a2a2a",fontSize:15,cursor:"pointer",fontFamily:"'Noto Sans JP'"}}>{n}</button>;})}
-            </div></div>
+          <div><label style={{fontSize:9,color:"#999",textTransform:"uppercase",letterSpacing:1}}>Map</label>
+            <select value={mapType} onChange={function(e){setMapType(e.target.value);}}
+              style={{display:"block",width:"100%",marginTop:2,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"6px 8px",fontSize:13,fontFamily:"'Noto Sans JP'",boxSizing:"border-box",cursor:"pointer"}}>
+              {Object.keys(MAP_PRESETS).map(function(key){var mp=MAP_PRESETS[key];return <option key={key} value={key}>{mp.icon+" "+mp.name+" — "+mp.desc}</option>;})}
+            </select>
+          </div>
           {playerInputs}
-          <button onClick={startGame} style={{marginTop:12,padding:"14px",borderRadius:4,background:"#2a2a2a",border:"none",color:"#fff",fontSize:16,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>START</button>
+          <button onClick={startGame} style={{marginTop:4,padding:"10px",borderRadius:4,background:"#2a2a2a",border:"none",color:"#fff",fontSize:14,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>START</button>
         </div></div>);
   }
 
@@ -1224,13 +1205,3 @@ function FishGame(){
     </div>
   );
 }
-
-    try {
-      var root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(FishGame));
-    } catch(e) {
-      document.getElementById('root').innerHTML = '<pre style="padding:20px;color:red;">Error: ' + e.message + '\n' + e.stack + '</pre>';
-    }
-  </script>
-</body>
-</html>
