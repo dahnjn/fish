@@ -1,21 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FISH</title>
-  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #root { height: 100%%; width: 100%%; overflow: hidden; }
+  </style>
 </head>
-<body style="margin:0;">
+<body>
   <div id="root"></div>
   <script type="text/babel">
-var useState = React.useState;
-var useEffect = React.useEffect;
-var useCallback = React.useCallback;
-var useRef = React.useRef;
-var useMemo = React.useMemo;
+    var { useState, useEffect, useCallback, useRef, useMemo } = React;
+    if (typeof window.storage === 'undefined') {
+      window.storage = {
+        get: async function(key) { try { var val = localStorage.getItem('fish_' + key); return val ? { key: key, value: val } : null; } catch(e) { return null; } },
+        set: async function(key, value) { try { localStorage.setItem('fish_' + key, value); return { key: key, value: value }; } catch(e) { return null; } },
+        delete: async function(key) { try { localStorage.removeItem('fish_' + key); return { key: key, deleted: true }; } catch(e) { return null; } },
+        list: async function(prefix) { var keys = []; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', '')); } } catch(e) {} return { keys: keys }; }
+      };
+    }
+
 
 var R=280, W=Math.sqrt(3)*R, MID_R=140;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -27,7 +37,8 @@ var FISH=[
   {name:"Golden Tai",color:"#E8A838",short:"Gold",weight:6},
   {name:"Jade Perch",color:"#1B9E77",short:"Jade",weight:4},
   {name:"Blue Tuna",color:"#3A86C8",short:"Blue",weight:2},
-  {name:"Purple Urchin",color:"#8B5FBF",short:"Purp",weight:1}
+  {name:"Purple Urchin",color:"#8B5FBF",short:"Purp",weight:1},
+  {name:"Black Cod",color:"#2a2a2a",short:"Cod",weight:0}
 ];
 var FISH_TW=FISH.reduce(function(s,f){return s+f.weight;},0);
 function rndFish(){var r=Math.random()*FISH_TW;for(var i=0;i<5;i++){r-=FISH[i].weight;if(r<=0)return i;}return 4;}
@@ -43,7 +54,7 @@ var MAP_PRESETS = {
   monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"}
 };
 
-function populateMap(mapType, nodes, sn) {
+function populateMap(mapType, nodes, sn, diamondNodeIds) {
   var nf = {};
   var sid = sn[0];
   if (mapType === "provinces") {
@@ -118,13 +129,15 @@ function populateMap(mapType, nodes, sn) {
       }
     });
   }
+  // All maps: diamond nodes get Black Cod exclusively
+  diamondNodeIds.forEach(function(did){ nf[did] = 5; });
   if (sid !== undefined) nf[sid] = null;
   return nf;
 }
 
 // Repopulate a single hex when depleted
 function repopHex(nf, hexIdx, nodes, mapType) {
-  var hs = nodes.filter(function(n) { return n.hi === hexIdx && n.type === "small"; });
+  var hs = nodes.filter(function(n) { return n.hi === hexIdx && n.type === "small" && n.type !== "diamond"; });
   if (mapType === "provinces") {
     var provinceMap = {0: 0, 2: 4, 5: 3, 7: 1};
     if (provinceMap[hexIdx] !== undefined) {
@@ -151,6 +164,7 @@ var FISH_IMG = [
   "data:image/png;base64,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",
   "data:image/png;base64,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",
   "data:image/png;base64,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",
+  "data:image/png;base64,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",
 ];
 
 function hv(cx,cy,r,i){var a=Math.PI/2-i*Math.PI/3;return[cx+r*Math.cos(a),cy-r*Math.sin(a)];}
@@ -189,40 +203,78 @@ function buildBoard(){
     for(i=0;i<6;i++){edges.add([g(13+i),g(19+i)].sort(srt).join(","));edges.add([g(19+i),g(13+(i+1)%6)].sort(srt).join(","));}
     ro+=25;
   });
-  // Extra board-frame connections from the updated map reference.
-  // These create the outer rectangular route and the central cross-route,
-  // using existing nodes where they already exist and adding playable fish nodes
-  // where the reference map has black connector points.
-  function getOrAddFrameNode(x,y){
-    var best=-1,bestD=Infinity;
-    for(var ni=0;ni<nodes.length;ni++){
-      var nd=nodes[ni];
-      var dd=dst([x,y],[nd.x,nd.y]);
-      if(dd<bestD){bestD=dd;best=ni;}
+  // Add 4 diamond outposts at cardinal positions (top, bottom, left, right)
+  // Each diamond has 4 corner nodes + 4 midpoint nodes = 8 nodes, type="diamond"
+  // Connected to main board at the nearest hex edge midpoint
+  var boardCx = W, boardCy = 1.5 * R;
+  var diamondR = 60;
+  var diamondPositions = [
+    {x: boardCx, y: -R - diamondR*4.5, connectDir: "top"},       // top
+    {x: boardCx, y: 3*R + R + diamondR*4.5, connectDir: "bot"},  // bottom
+    {x: -R*0.6 - diamondR*4.5, y: 1.5*R, connectDir: "left"},    // left
+    {x: 2*W + R*0.6 + diamondR*4.5, y: 1.5*R, connectDir: "right"} // right
+  ];
+  var diamondNodeIds = []; // track diamond node IDs for fish population
+  diamondPositions.forEach(function(dp) {
+    var cx = dp.x, cy = dp.y;
+    var dNodes = [];
+    // 4 corners of diamond (rotated 45deg square)
+    var corners = [
+      [cx, cy - diamondR],  // top
+      [cx + diamondR, cy],  // right
+      [cx, cy + diamondR],  // bottom
+      [cx - diamondR, cy]   // left
+    ];
+    // 4 midpoints
+    var mids = [
+      [(corners[0][0]+corners[1][0])/2, (corners[0][1]+corners[1][1])/2],
+      [(corners[1][0]+corners[2][0])/2, (corners[1][1]+corners[2][1])/2],
+      [(corners[2][0]+corners[3][0])/2, (corners[2][1]+corners[3][1])/2],
+      [(corners[3][0]+corners[0][0])/2, (corners[3][1]+corners[0][1])/2]
+    ];
+    // Add all 8 diamond nodes
+    corners.forEach(function(c) {
+      var nid = nodes.length;
+      nodes.push({x:c[0],y:c[1],type:"diamond",hi:-1,id:nid});
+      dNodes.push(nid);
+      diamondNodeIds.push(nid);
+    });
+    mids.forEach(function(m) {
+      var nid = nodes.length;
+      nodes.push({x:m[0],y:m[1],type:"diamond",hi:-1,id:nid});
+      dNodes.push(nid);
+      diamondNodeIds.push(nid);
+    });
+    // Diamond edges: corner-mid-corner ring
+    // Order: c0, m3, c3, m2, c2, m1, c1, m0 (going around)
+    // Actually simpler: c0-m0-c1-m1-c2-m2-c3-m3-c0
+    var ring = [dNodes[0],dNodes[4],dNodes[1],dNodes[5],dNodes[2],dNodes[6],dNodes[3],dNodes[7]];
+    for(var ri=0;ri<8;ri++){
+      edges.add([ring[ri],ring[(ri+1)%8]].sort(srt).join(","));
     }
-    if(bestD<2)return best;
-    var id=nodes.length;
-    nodes.push({x:x,y:y,type:"small",hi:-1,id:id});
-    return id;
-  }
-  function addFramePath(points){
-    for(var pi=1;pi<points.length;pi++){
-      var a=getOrAddFrameNode(points[pi-1][0],points[pi-1][1]);
-      var b=getOrAddFrameNode(points[pi][0],points[pi][1]);
-      if(a!==b)edges.add([a,b].sort(srt).join(","));
+    // Connect diamond to main board: find closest node on main board to the nearest mid
+    // Top diamond connects via bottom midpoint, etc.
+    var connectMid;
+    if(dp.connectDir==="top") connectMid = dNodes[6]; // bottom mid of diamond
+    else if(dp.connectDir==="bot") connectMid = dNodes[4]; // top mid of diamond
+    else if(dp.connectDir==="left") connectMid = dNodes[5]; // right mid of diamond
+    else connectMid = dNodes[7]; // left mid of diamond
+    // Find closest main board node
+    var closestMain = -1, closestDist = Infinity;
+    for(var ci=0;ci<nodes.length;ci++){
+      if(nodes[ci].type==="diamond")continue;
+      var dd = dst([nodes[ci].x,nodes[ci].y],[nodes[connectMid].x,nodes[connectMid].y]);
+      if(dd<closestDist){closestDist=dd;closestMain=ci;}
     }
-  }
-  var LX=-242.487113, RX=1212.435565, TOP=-280, MIDY=420, BOT=1120;
-  addFramePath([[LX,TOP],[0,TOP],[W,TOP],[2*W,TOP],[RX,TOP]]);
-  addFramePath([[LX,BOT],[0,BOT],[W,BOT],[2*W,BOT],[RX,BOT]]);
-  addFramePath([[LX,TOP],[LX,-140],[LX,0],[LX,140],[LX,MIDY],[LX,700],[LX,840],[LX,980],[LX,BOT]]);
-  addFramePath([[RX,TOP],[RX,-140],[RX,0],[RX,140],[RX,MIDY],[RX,700],[RX,840],[RX,980],[RX,BOT]]);
-  addFramePath([[LX,MIDY],[0,MIDY],[W/2,MIDY],[W,MIDY],[W+W/2,MIDY],[2*W,MIDY],[RX,MIDY]]);
+    if(closestMain>=0){
+      edges.add([connectMid,closestMain].sort(srt).join(","));
+    }
+  });
 
   var el=Array.from(edges).map(function(e){return e.split(",").map(Number);});
   var adj={};nodes.forEach(function(n){adj[n.id]=[];});
   el.forEach(function(p){var a=p[0],b=p[1];if(adj[a]&&adj[b]){if(adj[a].indexOf(b)<0)adj[a].push(b);if(adj[b].indexOf(a)<0)adj[b].push(a);}});
-  return{nodes:nodes,el:el,adj:adj};
+  return{nodes:nodes,el:el,adj:adj,diamondNodeIds:diamondNodeIds};
 }
 
 function DiceFace(props){
@@ -237,7 +289,28 @@ function DiceFace(props){
 }
 
 function calcPrices(cd,cn){
-  var p={};cn.forEach(function(cid){p[cid]={};for(var ft=0;ft<5;ft++){var del=cd[cid]&&cd[cid][ft]?cd[cid][ft]:{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);p[cid][ft]=tot>0?Math.round(100/tot):100;}});return p;
+  var p={};cn.forEach(function(cid){p[cid]={};for(var ft=0;ft<5;ft++){var del=cd[cid]&&cd[cid][ft]?cd[cid][ft]:{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);p[cid][ft]=tot>0?Math.round(100/tot):100;} p[cid][5]=0;});return p;
+}
+// BFS shortest distance from one node to another
+function bfsDistance(startId, targetId, adjList) {
+  if (startId === targetId) return 0;
+  var visited = {};
+  var queue = [[startId, 0]];
+  visited[startId] = true;
+  while (queue.length > 0) {
+    var item = queue.shift();
+    var nodeId = item[0], dist = item[1];
+    var neighbors = adjList[nodeId] || [];
+    for (var i = 0; i < neighbors.length; i++) {
+      var nId = neighbors[i];
+      if (nId === targetId) return dist + 1;
+      if (!visited[nId]) {
+        visited[nId] = true;
+        queue.push([nId, dist + 1]);
+      }
+    }
+  }
+  return -1; // unreachable
 }
 function calcScores(cd,cn,np){
   var sc=[];for(var k=0;k<np;k++)sc.push(0);
@@ -247,17 +320,21 @@ function calcScores(cd,cn,np){
 
 function PlayerAnim(props){
   var x=props.x, y=props.y, pid=props.pid, active=props.active;
-  var op=active?0.95:0.6, sw=active?1.6:1.0, spd=active?2:5;
+  var op=active?0.95:0.5, sw=active?1.6:0.8, spd=active?2:5;
   var C="#1a1a1a", R1=18, R2=12;
   var innerFill=active?C:"none";
+  // Active player gets a large colored halo
+  var haloColors=["#D6404540","#3A86C840","#1B9E7740","#E8A83840"];
+  var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : null;
 
   if(pid===0){
     var circles1=[];for(var i=0;i<6;i++){var a=i*Math.PI*2/6;circles1.push(<circle key={i} cx={x+R1*Math.cos(a)} cy={y+R1*Math.sin(a)} r={2.2} fill={active?C:"none"} stroke={C} strokeWidth={sw} opacity={op}/>);}
     var circles2=[];for(var i2=0;i2<4;i2++){var a2=i2*Math.PI*2/4;circles2.push(<circle key={i2} cx={x+R2*Math.cos(a2)} cy={y+R2*Math.sin(a2)} r={1.6} fill={C} opacity={op*0.7}/>);}
     return (<g>
+      {halo}
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+spd+"s linear infinite"}}>{circles1}</g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.7)+"s linear reverse infinite"}}>{circles2}</g>
-      {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
+      {active&&<circle cx={x} cy={y} r={24} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
 
@@ -265,6 +342,7 @@ function PlayerAnim(props){
     var tp1=x+","+(y-R1)+" "+(x+R1*0.866)+","+(y+R1*0.5)+" "+(x-R1*0.866)+","+(y+R1*0.5);
     var tp2=x+","+(y-R2)+" "+(x+R2*0.866)+","+(y+R2*0.5)+" "+(x-R2*0.866)+","+(y+R2*0.5);
     return (<g>
+      {halo}
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+spd+"s linear infinite"}}>
         <polygon points={tp1} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>
         <circle cx={x} cy={y-R1} r={1.5} fill={C} opacity={op}/>
@@ -274,13 +352,14 @@ function PlayerAnim(props){
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.8)+"s linear reverse infinite"}}>
         <polygon points={tp2} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
-      {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
+      {active&&<circle cx={x} cy={y} r={24} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
 
   if(pid===2){
     var s1=R1*0.707, s2=R2*0.707;
     return (<g>
+      {halo}
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+spd+"s linear infinite"}}>
         <rect x={x-s1} y={y-s1} width={s1*2} height={s1*2} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>
         <circle cx={x-s1} cy={y-s1} r={1.5} fill={C} opacity={op}/>
@@ -291,20 +370,21 @@ function PlayerAnim(props){
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.7)+"s linear reverse infinite"}}>
         <rect x={x-s2} y={y-s2} width={s2*2} height={s2*2} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
-      {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
+      {active&&<circle cx={x} cy={y} r={24} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
 
   if(pid===3){
     var starPts=function(scx,scy,sr){var coords=[];for(var si=0;si<10;si++){var sa=Math.PI/2+si*Math.PI/5;var srr=si%2===0?sr:sr*0.45;coords.push((scx+srr*Math.cos(sa))+","+(scy-srr*Math.sin(sa)));}return coords.join(" ");};
     return (<g>
+      {halo}
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+spd+"s linear infinite"}}>
         <polygon points={starPts(x,y,R1)} fill="none" stroke={C} strokeWidth={sw} opacity={op}/>
       </g>
       <g style={{transformOrigin:x+"px "+y+"px",animation:"spinR "+(spd*0.6)+"s linear reverse infinite"}}>
         <polygon points={starPts(x,y,R2)} fill={innerFill} stroke={C} strokeWidth={sw*0.6} opacity={op}/>
       </g>
-      {active&&<circle cx={x} cy={y} r={22} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
+      {active&&<circle cx={x} cy={y} r={24} fill="none" stroke={C} strokeWidth={1.2} style={{animation:"glow 1s ease-in-out infinite"}}/>}
     </g>);
   }
   return null;
@@ -313,12 +393,13 @@ function PlayerAnim(props){
 function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
+  var [blackCodBonus,setBlackCodBonus]=useState(500);
   var [numPlayers,setNumPlayers]=useState(4);
   var [mapType,setMapType]=useState("random");
   var [pn,setPn]=useState(["Player 1","Player 2","Player 3","Player 4"]);
   var [cpuFlags,setCpuFlags]=useState([false,false,false,false]);
   var bd=useMemo(function(){return buildBoard();},[]);
-  var nodes=bd.nodes, el=bd.el, adj=bd.adj;
+  var nodes=bd.nodes, el=bd.el, adj=bd.adj, diamondNodeIds=bd.diamondNodeIds||[];
   var [fm,setFm]=useState({});
   var [players,setPlayers]=useState([]);
   var [cp,setCp]=useState(0);
@@ -337,28 +418,18 @@ function FishGame(){
   var pr=useRef({sx:0,sy:0,ox:0,oy:0});
   var animRef=useRef(null);
   var [eventAnim,setEventAnim]=useState(null);
-  var [sideTab,setSideTab]=useState("market");
-
-  useEffect(function(){
-    if(!eventAnim) return;
-    var evDuration = eventAnim.type === "pirate" ? 4000 : 2200;
-    var t = setTimeout(function(){
-      setEventAnim(null);
-    }, evDuration);
-    return function(){
-      clearTimeout(t);
-    };
-  }, [eventAnim]);
+  var [diamondLevels,setDiamondLevels]=useState([1,1,1,1]); // level per diamond (1,2,3...)
+  var [sideTab,setSideTab]=useState("score");
   var [history,setHistory]=useState([]);
   var [saveMsg,setSaveMsg]=useState("");
 
   function getGameState(){
-    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags});
+    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags,blackCodBonus:blackCodBonus,diamondLevels:diamondLevels});
   }
   function loadGameState(str){
     try{
       var s=JSON.parse(str);
-      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);if(s.cpuFlags)setCpuFlags(s.cpuFlags);
+      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);if(s.cpuFlags)setCpuFlags(s.cpuFlags);if(s.blackCodBonus!==undefined)setBlackCodBonus(s.blackCodBonus);if(s.diamondLevels)setDiamondLevels(s.diamondLevels);
       return true;
     }catch(e){return false;}
   }
@@ -371,35 +442,20 @@ function FishGame(){
     setHistory(function(h){return h.slice(0,-1);});
     loadGameState(prev);
   }
-  function saveGame(){
+  async function saveGame(){
     try{
-      localStorage.setItem("fish_save", getGameState());
-      setSaveMsg("Saved!");
-      setTimeout(function(){setSaveMsg("");},1500);
-    }catch(e){
-      setSaveMsg("Save failed");
-      setTimeout(function(){setSaveMsg("");},1500);
-    }
+      await window.storage.set("fish_save",getGameState());
+      setSaveMsg("Saved!");setTimeout(function(){setSaveMsg("");},1500);
+    }catch(e){setSaveMsg("Save failed");setTimeout(function(){setSaveMsg("");},1500);}
   }
-  function loadGame(){
+  async function loadGame(){
     try{
-      var value = localStorage.getItem("fish_save");
-      if(value){
-        if(loadGameState(value)){
-          setSaveMsg("Loaded!");
-          setTimeout(function(){setSaveMsg("");},1500);
-        }else{
-          setSaveMsg("Bad data");
-          setTimeout(function(){setSaveMsg("");},1500);
-        }
-      }else{
-        setSaveMsg("No save found");
-        setTimeout(function(){setSaveMsg("");},1500);
-      }
-    }catch(e){
-      setSaveMsg("No save found");
-      setTimeout(function(){setSaveMsg("");},1500);
-    }
+      var result=await window.storage.get("fish_save");
+      if(result&&result.value){
+        if(loadGameState(result.value)){setSaveMsg("Loaded!");setTimeout(function(){setSaveMsg("");},1500);}
+        else{setSaveMsg("Bad data");setTimeout(function(){setSaveMsg("");},1500);}
+      }else{setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
+    }catch(e){setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
   }
 
   var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
@@ -412,10 +468,10 @@ function FishGame(){
   var liveScores=useMemo(function(){return calcScores(cd,cn,numPlayers);},[cd,cn,numPlayers]);
 
   function startGame(){
-    var initFish = populateMap(mapType, nodes, sn);
+    var initFish = populateMap(mapType, nodes, sn, diamondNodeIds);
     setFm(initFish);
     var id={};cn.forEach(function(nId){id[nId]={};for(var f=0;f<5;f++)id[nId][f]={};});setCd(id);
-    var ps=[];for(var i=0;i<numPlayers;i++)ps.push({id:i,name:pn[i],position:sn[0],fish:[0,0,0,0,0],hasDouble:true,hasTriple:true,hasQuad:true,isCpu:cpuFlags[i]});
+    var ps=[];for(var i=0;i<numPlayers;i++)ps.push({id:i,name:pn[i],position:sn[0],fish:[0,0,0,0,0,0],hasDouble:true,hasTriple:true,hasQuad:true,isCpu:cpuFlags[i],blackCod:0});
     setPlayers(ps);setCp(0);setCr(1);setPhase("playing");setTp("roll");setDiceValues([]);setEventAnim(null);setZoom(1);setPan({x:0,y:0});
   }
 
@@ -439,12 +495,25 @@ function FishGame(){
   var rn=useMemo(function(){
     if(tp!=="move"||ml<=0)return[];
     var cur=sp[sp.length-1];if(cur===undefined||cur===null)return[];
+    // Get positions of players currently docked at cities
+    var cityOccupied={};
+    players.forEach(function(pl,i){if(i!==cp&&pl.position!==null&&cn.indexOf(pl.position)>=0)cityOccupied[pl.position]=true;});
     return(adj[cur]||[]).filter(function(nId){
       if(sp.indexOf(nId)>=0&&cn.indexOf(nId)<0)return false;
       if(ml===1&&otherPos.indexOf(nId)>=0&&cn.indexOf(nId)<0)return false;
+      // Cannot enter a city that already has a player docked
+      if(cn.indexOf(nId)>=0&&cityOccupied[nId])return false;
       return true;
     });
-  },[tp,ml,sp,adj,cn,otherPos]);
+  },[tp,ml,sp,adj,cn,otherPos,players,cp]);
+
+  // Auto-end turn if no legal moves available
+  useEffect(function(){
+    if(tp==="move"&&ml>0&&rn.length===0){
+      // No valid moves - turn ends immediately
+      doEndTurn(players,500);
+    }
+  },[tp,ml,rn]);
 
   function doEndTurn(pls,delay){
     if(!delay)delay=300;
@@ -481,12 +550,13 @@ function FishGame(){
 
   // BFS to find best path of given length from a position
   function cpuFindBestPath(startPos, moves, curFish, curFm, curCd, otherPlayerPos) {
-    // Explore all possible paths of exact length `moves`, pick highest value
     var bestPath = null, bestScore = -1;
+    // Get cities occupied by other players
+    var occupiedCities = {};
+    players.forEach(function(pl,i){if(i!==cp&&pl.position!==null&&cn.indexOf(pl.position)>=0)occupiedCities[pl.position]=true;});
     
     function explore(path, movesLeft, simFish, simFm) {
       if (movesLeft === 0 || nodes[path[path.length-1]].type === "city") {
-        // Score this path
         var score = 0;
         var tempFish = simFish.slice();
         for (var pi = 1; pi < path.length; pi++) {
@@ -494,29 +564,25 @@ function FishGame(){
           var nd = nodes[nid];
           if (simFm[nid] !== null && simFm[nid] !== undefined && nd.type === "small") {
             score += [1, 2, 3, 5, 10][simFm[nid]];
+            tempFish[simFm[nid]]++;
           }
-          // Bonus for pirating through opponent
           if (otherPlayerPos.indexOf(nid) >= 0 && pi < path.length - 1) {
-            score += 8; // piracy is valuable
+            score += 8;
           }
           if (nd.type === "city") {
-            score += cpuNodeValue(nid, tempFish, simFm, curCd) * 0.5;
+            var sellVal = 0;
+            tempFish.forEach(function(count, fti) {
+              if (count > 0) {
+                var existing = curCd[nid] && curCd[nid][fti] ? Object.values(curCd[nid][fti]).reduce(function(a,b){return a+b;},0) : 0;
+                sellVal += Math.round(100 * count / (existing + count));
+              }
+            });
+            score += sellVal;
           }
         }
-        // Penalize ending far from cities when carrying lots of fish
-        var totalCarrying = tempFish.reduce(function(a,b){return a+b;},0) + simFish.reduce(function(a,b){return a+b;},0);
-        if (totalCarrying > 6) {
-          // Find nearest city distance (rough)
-          var minCityDist = Infinity;
-          cn.forEach(function(cid) {
-            var d = dst([nodes[path[path.length-1]].x, nodes[path[path.length-1]].y], [nodes[cid].x, nodes[cid].y]);
-            if (d < minCityDist) minCityDist = d;
-          });
-          score -= minCityDist * 0.002;
-        }
-        // Prefer selling when carrying a lot
-        if (nodes[path[path.length-1]].type === "city" && totalCarrying > 3) {
-          score += totalCarrying * 3;
+        var totalCarrying = tempFish.reduce(function(a,b){return a+b;},0);
+        if (totalCarrying > 4 && nodes[path[path.length-1]].type !== "city") {
+          score += 2; // slight bonus for having fish (encourages collecting)
         }
         if (score > bestScore) { bestScore = score; bestPath = path.slice(); }
         return;
@@ -525,14 +591,14 @@ function FishGame(){
       var neighbors = (adj[cur] || []).filter(function(nid) {
         if (path.indexOf(nid) >= 0 && cn.indexOf(nid) < 0) return false;
         if (movesLeft === 1 && otherPlayerPos.indexOf(nid) >= 0 && cn.indexOf(nid) < 0) return false;
+        if (cn.indexOf(nid) >= 0 && occupiedCities[nid]) return false; // city occupied
         return true;
       });
-      // Limit branching to avoid explosion — sample top candidates
-      if (neighbors.length > 6) {
+      if (neighbors.length > 5) {
         neighbors.sort(function(a, b) {
           return cpuNodeValue(b, simFish, simFm, curCd) - cpuNodeValue(a, simFish, simFm, curCd);
         });
-        neighbors = neighbors.slice(0, 6);
+        neighbors = neighbors.slice(0, 5);
       }
       neighbors.forEach(function(nid) {
         var newFish = simFish.slice();
@@ -584,18 +650,36 @@ function FishGame(){
     if (!player || !player.isCpu || tp !== "move" || ml <= 0) return;
     
     var otherP = players.filter(function(_, i) { return i !== cp; }).map(function(p) { return p.position; });
-    var bestPath = cpuFindBestPath(player.position, ml, player.fish, fm, cd, otherP);
+    var bestPath = cpuFindBestPath(player.position, Math.min(ml, 8), player.fish, fm, cd, otherP);
     
-    if (!bestPath || bestPath.length <= 1) return;
+    if (!bestPath || bestPath.length <= 1) {
+      // No good path found - just pick any valid neighbor
+      var curPos = player.position;
+      var fallback = (adj[curPos] || []).filter(function(nid) {
+        // Basic validity check
+        if (otherP.indexOf(nid) >= 0 && cn.indexOf(nid) < 0) return false;
+        return true;
+      });
+      if (fallback.length > 0) {
+        bestPath = [curPos, fallback[Math.floor(Math.random() * fallback.length)]];
+      } else {
+        // Truly stuck - end turn
+        doEndTurn(players, 300);
+        return;
+      }
+    }
     
-    // Execute moves one at a time with delays
     var moveIdx = 1;
     function doNextMove() {
-      if (moveIdx >= bestPath.length) return;
+      if (moveIdx >= bestPath.length || tp !== "move" || ml <= 0) return;
       var nextNode = bestPath[moveIdx];
       moveIdx++;
-      moveN(nextNode);
-      if (moveIdx < bestPath.length) {
+      // Verify the move is still valid before executing
+      var curAdj = adj[players[cp].position] || [];
+      if (curAdj.indexOf(nextNode) >= 0) {
+        moveN(nextNode);
+      }
+      if (moveIdx < bestPath.length && tp === "move" && ml > 0) {
         setTimeout(doNextMove, 120);
       }
     }
@@ -625,31 +709,56 @@ function FishGame(){
     var np=players.slice();var p=Object.assign({},np[cp]);p.position=nId;
     var node=nodes[nId];var nf=Object.assign({},fm);
     var nd=JSON.parse(JSON.stringify(cd));var ended=false;
-    if(nf[nId]!==undefined&&nf[nId]!==null&&node.type==="small"){
-      var ft=nf[nId];p.fish=p.fish.slice();p.fish[ft]++;nf[nId]=null;
+    if(nf[nId]!==undefined&&nf[nId]!==null&&(node.type==="small"||node.type==="diamond")){
+      var ft=nf[nId];p.fish=p.fish.slice();
+      if(ft===5&&node.type==="diamond"){
+        // Black Cod on diamond: catch amount = diamond level
+        var dIdx=Math.floor((diamondNodeIds.indexOf(nId))/8);
+        if(dIdx<0)dIdx=0;
+        p.fish[ft]+=(diamondLevels[dIdx]||1);
+      }else{
+        p.fish[ft]++;
+      }
+      nf[nId]=null;
       var hs=nodes.filter(function(n){return n.hi===node.hi&&n.type==="small";});
-      if(hs.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;}))repopHex(nf, node.hi, nodes, mapType);
+      if(node.type==="small"&&hs.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;}))repopHex(nf, node.hi, nodes, mapType);
+      // Diamond depletion: if all 8 nodes in this diamond are empty, level up and refill
+      if(node.type==="diamond"){
+        var dIdx2=Math.floor((diamondNodeIds.indexOf(nId))/8);
+        if(dIdx2>=0){
+          var dStart=dIdx2*8;
+          var dNodes2=diamondNodeIds.slice(dStart,dStart+8);
+          var allGone=dNodes2.every(function(did){return nf[did]===null||nf[did]===undefined;});
+          if(allGone){
+            var newLevels=diamondLevels.slice();newLevels[dIdx2]=(newLevels[dIdx2]||1)+1;setDiamondLevels(newLevels);
+            dNodes2.forEach(function(did){nf[did]=5;});
+          }
+        }
+      }
     }
     // Piracy: if the node you just moved TO has an opponent, steal immediately
     // (you can't END on them, but you pass through them)
     np.forEach(function(pl,i){if(i===cp)return;if(pl.position===nId){
       var st=pl.fish.reduce(function(a,b){return a+b;},0);
-      if(st>0){p.fish=p.fish.map(function(f,j){return f+pl.fish[j];});np[i]=Object.assign({},pl,{fish:[0,0,0,0,0]});setEventAnim({type:"pirate",thief:p.name,victim:pl.name,count:st,stolenFish:pl.fish.slice()});}
+      if(st>0){p.fish=p.fish.map(function(f,j){return f+pl.fish[j];});np[i]=Object.assign({},pl,{fish:[0,0,0,0,0,0]});setEventAnim({type:"pirate",thief:p.name,victim:pl.name,count:st,stolenFish:pl.fish.slice()});}
     }});
-    if(node.type==="city"){var fc=p.fish.slice();var tot=fc.reduce(function(a,b){return a+b;},0);
-      if(tot>0){
-        // Calculate current value of this sale
+    if(node.type==="city"){var fc=p.fish.slice();
+      // Black Cod (index 5) doesn't sell at market - it gets banked
+      var codCount = fc[5] || 0;
+      fc[5] = 0;
+      var tot=fc.reduce(function(a,b){return a+b;},0);
+      if(tot>0||codCount>0){
         var saleValue=0;
         fc.forEach(function(c,fti){
-          if(c>0){
+          if(c>0 && fti < 5){
             if(!nd[nId][fti])nd[nId][fti]={};
             nd[nId][fti][cp]=(nd[nId][fti][cp]||0)+c;
-            // Price after this delivery: $100 / total of this type at this city
             var cityTotal=Object.values(nd[nId][fti]).reduce(function(a,b){return a+b;},0);
             saleValue+=Math.round(100*c/cityTotal);
           }
         });
-        setEventAnim({type:"sell",city:CFULL[cn.indexOf(nId)],fishCounts:fc,value:saleValue});p.fish=[0,0,0,0,0];}ended=true;setCd(nd);}
+        if(codCount>0){ p.blackCod = (p.blackCod||0) + codCount; }
+        setEventAnim({type:"sell",city:CFULL[cn.indexOf(nId)],fishCounts:fc,value:saleValue,codCount:codCount});p.fish=[0,0,0,0,0,0];}ended=true;setCd(nd);}
     np[cp]=p;setPlayers(np);setFm(nf);var newMl=ml-1;setMl(newMl);if(ended||newMl<=0)doEndTurn(np,ended?2400:300);
   }
 
@@ -662,7 +771,7 @@ function FishGame(){
   },[phase,cd,cn,numPlayers]);
 
   var handleW=useCallback(function(e){e.preventDefault();setZoom(function(z){return Math.min(5,Math.max(0.3,z*(e.deltaY>0?0.9:1.1)));});},[]);
-  var handlePD=useCallback(function(e){if(e.button===1||(e.button===0&&e.altKey)){setIsP(true);pr.current={sx:e.clientX,sy:e.clientY,ox:pan.x,oy:pan.y};e.preventDefault();}},[pan]);
+  var handlePD=useCallback(function(e){if(e.button===0){setIsP(true);pr.current={sx:e.clientX,sy:e.clientY,ox:pan.x,oy:pan.y};}},[pan]);
   var handlePM=useCallback(function(e){if(!isP)return;setPan({x:pr.current.ox+(e.clientX-pr.current.sx),y:pr.current.oy+(e.clientY-pr.current.sy)});},[isP]);
   var handlePU=useCallback(function(){setIsP(false);},[]);
   useEffect(function(){return function(){if(animRef.current)clearInterval(animRef.current);};},[]);
@@ -678,6 +787,7 @@ function FishGame(){
   // Event overlay
   var eventEl=null;
   if(eventAnim){
+    var evDone=function(){setEventAnim(null);};
     if(eventAnim.type==="sell"){
       var fishDots=eventAnim.fishCounts.map(function(c,i){
         if(c<=0)return null;
@@ -690,6 +800,7 @@ function FishGame(){
           <div style={{fontFamily:"'Noto Serif JP',serif",fontSize:22,fontWeight:700,color:"#1a1a1a"}}>{"Port of "+eventAnim.city}</div>
           <div style={{display:"flex",gap:8,justifyContent:"center",marginTop:12}}>{fishDots}</div>
           <div style={{fontSize:13,color:"#8a7a6a",marginTop:8,fontWeight:500}}>Fish Sold</div>
+          {eventAnim.codCount>0&&<div style={{fontSize:12,color:"#2a2a2a",marginTop:4,fontWeight:600}}>{"+ "+eventAnim.codCount+" Black Cod banked!"}</div>}
           {eventAnim.value!==undefined&&<div style={{fontSize:20,fontWeight:700,color:"#1a1a1a",marginTop:4}}>{"Current value: $"+eventAnim.value}</div>}
         </div></div>;
     }else if(eventAnim.type==="pirate"){
@@ -731,6 +842,8 @@ function FishGame(){
           </div>
         </div></div>;
     }
+    var evDuration=eventAnim.type==="pirate"?4000:2200;
+    setTimeout(evDone,evDuration);
   }
 
   // SETUP
@@ -758,7 +871,10 @@ function FishGame(){
         <h1 style={{fontFamily:"'Noto Serif JP',serif",fontSize:56,fontWeight:700,color:"#1a1a1a",marginBottom:4,letterSpacing:4}}>FISH</h1>
         <p style={{color:"#888",marginBottom:40,fontSize:13,letterSpacing:2}}>漁 — catch, steal, sell</p>
         <div style={{width:340,display:"flex",flexDirection:"column",gap:14}}>
-          <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Rounds</label>
+          <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Black Cod Bonus ($)</label>
+          <input type="number" min="0" max="5000" value={blackCodBonus} onChange={function(e){setBlackCodBonus(Math.max(0,parseInt(e.target.value)||0));}}
+            style={{display:"block",width:"100%",marginTop:4,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:15,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
+        <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Rounds</label>
             <input type="number" min="1" max="50" value={numRounds} onChange={function(e){setNumRounds(Math.max(1,parseInt(e.target.value)||1));}}
               style={{display:"block",width:"100%",marginTop:4,background:"#fff",border:"1px solid #ddd",borderRadius:4,color:"#2a2a2a",padding:"10px 12px",fontSize:15,fontFamily:"'Noto Sans JP'",boxSizing:"border-box"}}/></div>
           <div><label style={{fontSize:10,color:"#999",textTransform:"uppercase",letterSpacing:2}}>Map</label>
@@ -816,6 +932,20 @@ function FishGame(){
             {HC.map(function(hc,i){var pts=[];for(var j=0;j<6;j++){var v=hv(hc[0],hc[1],R,j);pts.push(v[0]+","+v[1]);}
               return <polygon key={"h"+i} points={pts.join(" ")} fill="none" stroke="#c8b99a" strokeWidth={0.4}/>;
             })}
+            {/* Diamond outlines with level numbers */}
+            {(function(){
+              var bcx=W,bcy=1.5*R,dr=60;
+              var dps=[[bcx,-(R+dr*4.5)],[bcx,3*R+R+dr*4.5],[-(R*0.6+dr*4.5),1.5*R],[2*W+R*0.6+dr*4.5,1.5*R]];
+              return dps.map(function(dp,i){
+                var cx=dp[0],cy=dp[1];
+                var pts=cx+","+(cy-dr)+" "+(cx+dr)+","+cy+" "+cx+","+(cy+dr)+" "+(cx-dr)+","+cy;
+                var lvl=diamondLevels[i]||1;
+                return <g key={"dm"+i}>
+                  <polygon points={pts} fill="none" stroke="#2a2a2a" strokeWidth={1} strokeDasharray="4,2"/>
+                  <text x={cx} y={cy+dr+14} textAnchor="middle" fill="#2a2a2a" fontSize={10} fontWeight={700} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
+                </g>;
+              });
+            })()}
             {HC.map(function(hc,i){return <circle key={"c"+i} cx={hc[0]} cy={hc[1]} r={MID_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/>;})}
             {el.map(function(pair,i){return <line key={i} x1={nodes[pair[0]].x} y1={nodes[pair[0]].y} x2={nodes[pair[1]].x} y2={nodes[pair[1]].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
 
@@ -834,7 +964,7 @@ function FishGame(){
 
             {nodes.map(function(node){
               var ft=fm[node.id];var hasFish=ft!==null&&ft!==undefined;
-              var isCity=node.type==="city";var isStart=node.type==="start";var isFrame=node.type==="frame";
+              var isCity=node.type==="city";var isStart=node.type==="start";
               var cityR=14;
               if(isCity){
                 var ci=cn.indexOf(node.id);
@@ -850,9 +980,8 @@ function FishGame(){
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
                 {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill="#1a1a1a"/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
                 :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
-                :isFrame?<circle cx={node.x} cy={node.y} r={NR+2} fill="#1a1a1a"/>
-                :hasFish?<circle cx={node.x} cy={node.y} r={NR} fill={FISH[ft].color} stroke="#fff" strokeWidth={0.5}/>
-                :<circle cx={node.x} cy={node.y} r={NR*0.4} fill="#d4c9b5" stroke="#b8a890" strokeWidth={0.3}/>}
+                :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?1.5:0.5}/>
+                :<circle cx={node.x} cy={node.y} r={NR} fill="none" stroke="#c8b99a" strokeWidth={0.5}/>}
               </g>;
             })}
 
@@ -877,6 +1006,30 @@ function FishGame(){
                 </div>
                 <span style={{fontSize:20,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</span></div>;})}
             {phase==="gameover"&&<div style={{textAlign:"center",marginTop:12,fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3}}>GAME OVER</div>}
+            {/* Black Cod Bonus Tracker */}
+            {(function(){
+              var maxCod=0,maxPlayer=-1;
+              players.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxCod){maxCod=pc;maxPlayer=i;}});
+              return <div style={{marginTop:6,padding:"8px 10px",borderRadius:4,background:"#2a2a2a",color:"#fff"}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                  <span style={{fontSize:10,fontWeight:700,letterSpacing:1}}>BLACK COD BONUS</span>
+                  <span style={{fontSize:16,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+blackCodBonus}</span>
+                </div>
+                {maxCod===0?<div style={{fontSize:10,color:"#aaa"}}>No cod banked yet</div>
+                :<div>
+                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+                    <span style={{fontSize:11,fontWeight:600}}>{PSYM[maxPlayer]+" "+(players[maxPlayer]?players[maxPlayer].name:"")+" leads"}</span>
+                    <span style={{fontSize:13,fontWeight:900,color:"#E8A838"}}>{maxCod+" cod"}</span>
+                  </div>
+                  <div style={{display:"flex",gap:8,marginTop:4}}>
+                    {players.map(function(pl,i){var pc=pl.blackCod||0;return <div key={i} style={{fontSize:10,opacity:pc>0?1:0.4}}>
+                      <span>{PSYM[i]}</span><span style={{fontWeight:700,marginLeft:2}}>{pc}</span>
+                    </div>;})}
+                  </div>
+                  <div style={{fontSize:10,color:"#E8A838",fontWeight:700,marginTop:4}}>{"Need "+(maxCod+1)+" cod to take the lead"}</div>
+                </div>}
+              </div>;
+            })()}
           </div>
 
           {/* PLAYER CONTROLS */}
@@ -905,6 +1058,42 @@ function FishGame(){
                   <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={32}/>;})}</div>
                   <span style={{fontSize:18,fontWeight:900,color:"#1B9E77",fontFamily:"'Noto Serif JP',serif"}}>{"Moves: "+ml}</span></div>)}
             </div>)}
+
+          {/* PIRACY INTEL - show distance to other ships not docked at cities */}
+          {phase==="playing"&&players[cp]&&players[cp].position!==null&&(function(){
+            var curPos=players[cp].position;
+            var targets=[];
+            players.forEach(function(pl,i){
+              if(i===cp||pl.position===null)return;
+              // Skip players docked at cities
+              if(cn.indexOf(pl.position)>=0)return;
+              var totalFish=pl.fish.reduce(function(a,b){return a+b;},0);
+              if(totalFish===0)return; // no fish to steal
+              var dist=bfsDistance(curPos,pl.position,adj);
+              targets.push({name:pl.name,sym:PSYM[i],dist:dist,fish:pl.fish.slice(),totalFish:totalFish});
+            });
+            if(targets.length===0)return null;
+            targets.sort(function(a,b){return a.dist-b.dist;});
+            return <div style={{padding:8,borderBottom:"1px solid #d4c9b5",background:"#f5f0e8"}}>
+              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Nearby Ships</div>
+              {targets.map(function(t,i){
+                return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:4}}>
+                    <span style={{fontSize:12}}>{t.sym}</span>
+                    <span style={{fontSize:10,fontWeight:600}}>{t.name}</span>
+                  </div>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <div style={{display:"flex",gap:2}}>
+                      {t.fish.map(function(c,fi){return c>0?<div key={fi} style={{display:"flex",alignItems:"center",gap:1}}>
+                        <div style={{width:5,height:5,borderRadius:"50%",background:FISH[fi].color}}/><span style={{fontSize:8,fontWeight:600}}>{c}</span>
+                      </div>:null;})}
+                    </div>
+                    <span style={{fontSize:11,fontWeight:900,color:t.dist<=6?"#D64045":t.dist<=12?"#E8A838":"#8a7a6a"}}>{t.dist+" moves"}</span>
+                  </div>
+                </div>;
+              })}
+            </div>;
+          })()}
 
 <div style={{display:"flex",borderBottom:"1px solid #d4c9b5"}}>
             {["market","fish"].map(function(t){return <button key={t} onClick={function(){setSideTab(t);}} style={{flex:1,padding:"6px",fontSize:9,fontWeight:sideTab===t?700:400,background:sideTab===t?"#f0e6d3":"transparent",border:"none",borderBottom:sideTab===t?"2px solid #1a1a1a":"2px solid transparent",cursor:"pointer",textTransform:"uppercase",letterSpacing:1,color:"#1a1a1a"}}>{t}</button>;})}
@@ -989,8 +1178,12 @@ function FishGame(){
   );
 }
 
-
-ReactDOM.createRoot(document.getElementById("root")).render(<FishGame />);
+    try {
+      var root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(React.createElement(FishGame));
+    } catch(e) {
+      document.getElementById('root').innerHTML = '<pre style="padding:20px;color:red;">Error: ' + e.message + '\n' + e.stack + '</pre>';
+    }
   </script>
 </body>
 </html>
