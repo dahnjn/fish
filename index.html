@@ -252,23 +252,70 @@ function buildBoard(){
     for(var ri=0;ri<8;ri++){
       edges.add([ring[ri],ring[(ri+1)%8]].sort(srt).join(","));
     }
-    // Connect diamond to main board: find closest node on main board to the nearest mid
-    // Top diamond connects via bottom midpoint, etc.
-    var connectMid;
-    if(dp.connectDir==="top") connectMid = dNodes[6]; // bottom mid of diamond
-    else if(dp.connectDir==="bot") connectMid = dNodes[4]; // top mid of diamond
-    else if(dp.connectDir==="left") connectMid = dNodes[5]; // right mid of diamond
-    else connectMid = dNodes[7]; // left mid of diamond
-    // Find closest main board node
-    var closestMain = -1, closestDist = Infinity;
+    // Connect diamond to main board at 3 points:
+    // Facing midpoint connects to closest board node
+    // Two side corners connect to the outermost perimeter vertices of the corner hexes
+    var connectMid, connectCorner1, connectCorner2;
+    // Target positions for corners (outermost hex vertices)
+    var corner1Target, corner2Target;
+    if(dp.connectDir==="top"){
+      connectMid = dNodes[2]; // bottom corner
+      connectCorner1 = dNodes[3]; // left corner
+      connectCorner2 = dNodes[1]; // right corner
+      // Left corner → top-left vertex of hex 0 (vertex 5 = upper-left)
+      // Right corner → top-right vertex of hex 2 (vertex 1 = upper-right)
+      corner1Target = hv(HC[0][0],HC[0][1],R,0); // top vertex of hex 0
+      corner2Target = hv(HC[2][0],HC[2][1],R,0); // top vertex of hex 2
+    } else if(dp.connectDir==="bot"){
+      connectMid = dNodes[0]; // top corner
+      connectCorner1 = dNodes[3]; // left corner
+      connectCorner2 = dNodes[1]; // right corner
+      // Left corner → bottom-left vertex of hex 5 (vertex 4 = lower-left)
+      // Right corner → bottom-right vertex of hex 7 (vertex 2 = lower-right)
+      corner1Target = hv(HC[5][0],HC[5][1],R,3); // bottom vertex of hex 5
+      corner2Target = hv(HC[7][0],HC[7][1],R,3); // bottom vertex of hex 7
+    } else if(dp.connectDir==="left"){
+      connectMid = dNodes[1]; // right corner
+      connectCorner1 = dNodes[0]; // top corner
+      connectCorner2 = dNodes[2]; // bottom corner
+      // Top corner → leftmost vertex of hex 0 (between vertex 4 and 5, use midpoint edge)
+      corner1Target = hv(HC[0][0],HC[0][1],R,5); // upper-left vertex of hex 0
+      // Bottom corner → leftmost vertex of hex 5 (between vertex 3 and 4, use midpoint edge)
+      corner2Target = hv(HC[5][0],HC[5][1],R,4); // lower-left vertex of hex 5
+    } else {
+      connectMid = dNodes[3]; // left corner
+      connectCorner1 = dNodes[0]; // top corner
+      connectCorner2 = dNodes[2]; // bottom corner
+      // Top corner → rightmost vertex of hex 2 (between vertex 1 and 0, use midpoint edge)
+      corner1Target = hv(HC[2][0],HC[2][1],R,1); // upper-right vertex of hex 2
+      // Bottom corner → rightmost vertex of hex 7 (between vertex 2 and 1, use midpoint edge)
+      corner2Target = hv(HC[7][0],HC[7][1],R,2); // lower-right vertex of hex 7
+    }
+    // Midpoint: connect to the edge midpoint of the facing middle hex
+    var midTarget;
+    if(dp.connectDir==="top") midTarget = hv(HC[1][0],HC[1][1],R,0); // top vertex of hex 1 (Kobe)
+    else if(dp.connectDir==="bot") midTarget = hv(HC[6][0],HC[6][1],R,3); // bottom vertex of hex 6 (Niigata)
+    else if(dp.connectDir==="left") midTarget = hm(HC[3][0],HC[3][1],R,4); // left edge mid of hex 3 (Hakodate)
+    else midTarget = hm(HC[4][0],HC[4][1],R,1); // right edge mid of hex 4 (Shimizu)
+    
+    var closestMid = -1, closestMidDist = Infinity;
     for(var ci=0;ci<nodes.length;ci++){
       if(nodes[ci].type==="diamond")continue;
-      var dd = dst([nodes[ci].x,nodes[ci].y],[nodes[connectMid].x,nodes[connectMid].y]);
-      if(dd<closestDist){closestDist=dd;closestMain=ci;}
+      var dd = dst([nodes[ci].x,nodes[ci].y], midTarget);
+      if(dd<closestMidDist){closestMidDist=dd;closestMid=ci;}
     }
-    if(closestMain>=0){
-      edges.add([connectMid,closestMain].sort(srt).join(","));
-    }
+    if(closestMid>=0) edges.add([connectMid,closestMid].sort(srt).join(","));
+    // Corners: find the board node closest to the target positions
+    [[connectCorner1, corner1Target], [connectCorner2, corner2Target]].forEach(function(pair) {
+      var cornerNode = pair[0], target = pair[1];
+      var bestNode = -1, bestDist = Infinity;
+      for(var ci2=0;ci2<nodes.length;ci2++){
+        if(nodes[ci2].type==="diamond")continue;
+        var dd2 = dst([nodes[ci2].x,nodes[ci2].y], target);
+        if(dd2<bestDist){bestDist=dd2;bestNode=ci2;}
+      }
+      if(bestNode>=0) edges.add([cornerNode,bestNode].sort(srt).join(","));
+    });
   });
 
   var el=Array.from(edges).map(function(e){return e.split(",").map(Number);});
@@ -941,8 +988,8 @@ function FishGame(){
                 var pts=cx+","+(cy-dr)+" "+(cx+dr)+","+cy+" "+cx+","+(cy+dr)+" "+(cx-dr)+","+cy;
                 var lvl=diamondLevels[i]||1;
                 return <g key={"dm"+i}>
-                  <polygon points={pts} fill="none" stroke="#2a2a2a" strokeWidth={1} strokeDasharray="4,2"/>
-                  <text x={cx} y={cy+dr+14} textAnchor="middle" fill="#2a2a2a" fontSize={10} fontWeight={700} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
+                  <polygon points={pts} fill="none" stroke="#8a7a6a" strokeWidth={0.6}/>
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#E8A838" fontSize={16} fontWeight={900} fontFamily="'Noto Serif JP',serif" opacity={0.4}>{"x"+lvl}</text>
                 </g>;
               });
             })()}
@@ -980,7 +1027,7 @@ function FishGame(){
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
                 {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill="#1a1a1a"/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
                 :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
-                :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?1.5:0.5}/>
+                :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={ft===5?"#3a3a3a":""+FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>
                 :<circle cx={node.x} cy={node.y} r={NR} fill="none" stroke="#c8b99a" strokeWidth={0.5}/>}
               </g>;
             })}
