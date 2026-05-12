@@ -1100,19 +1100,19 @@ function FishGame(){
               var accepts=CITY_ACCEPTS[ci]||[];
               if(accepts.indexOf(5)>=0&&accepts.length===1)return null; // Cod-only cities: no price
               var nd2=nodes[nId];
+              var avgP=0;for(var fi3=0;fi3<5;fi3++){avgP+=(prices[nId]&&prices[nId][fi3]!==undefined?prices[nId][fi3]:100);}avgP=avgP/5;
+              var cR=Math.min(56,Math.max(14,14+(avgP-20)*0.5));
               var priceText="";
               if(accepts.length===1){
-                // Single fish city - show fixed price
                 var ft2=accepts[0];
                 var pr2=prices[nId]&&prices[nId][ft2]!==undefined?prices[nId][ft2]:100;
                 priceText="$"+pr2;
               }else{
-                // Rainbow city - cycle through accepted fish prices
                 var cycFt=accepts[priceIdx%accepts.length];
                 var pr3=prices[nId]&&prices[nId][cycFt]!==undefined?prices[nId][cycFt]:100;
                 priceText=FISH[cycFt].short+" $"+pr3;
               }
-              return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cityR-6} textAnchor="middle" fill="#1a1a1a" fontSize={8} fontWeight={700} fontFamily="'Noto Serif JP',serif">{priceText}</text>;
+              return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-6} textAnchor="middle" fill="#1a1a1a" fontSize={8} fontWeight={700} fontFamily="'Noto Serif JP',serif">{priceText}</text>;
             })}
 
             {players.filter(function(p){return p.position!==null;}).map(function(p){
