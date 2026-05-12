@@ -479,7 +479,7 @@ function FishGame(){
   var animRef=useRef(null);
   var [eventAnim,setEventAnim]=useState(null);
   var [diamondLevels,setDiamondLevels]=useState([1,1,1,1]); // level per diamond (1,2,3...)
-  var [sideTab,setSideTab]=useState("score");
+  var [sideTab,setSideTab]=useState("fish");
   var [history,setHistory]=useState([]);
   var [saveMsg,setSaveMsg]=useState("");
 
@@ -914,7 +914,7 @@ function FishGame(){
         playerInputs.push(
           <div key={idx}>
             <div style={{display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-              <label style={{fontSize:10,color:"#1a1a1a",textTransform:"uppercase",letterSpacing:2}}>{PSYM[idx]+" Player "+(idx+1)}</label>
+              <label style={{fontSize:10,color:"#1a1a1a",textTransform:"uppercase",letterSpacing:2}}>{PSYM[idx]}</label>
               <button onClick={function(){var nc=cpuFlags.slice();nc[idx]=!nc[idx];setCpuFlags(nc);if(!nc[idx]&&pn[idx].indexOf("CPU")===0){var np2=pn.slice();np2[idx]="Player "+(idx+1);setPn(np2);}if(nc[idx]){var np3=pn.slice();np3[idx]="CPU "+(idx+1);setPn(np3);}}}
                 style={{fontSize:8,padding:"2px 8px",borderRadius:3,cursor:"pointer",background:cpuFlags[idx]?"#1a1a1a":"#f5f0e8",border:"1px solid "+(cpuFlags[idx]?"#1a1a1a":"#c8b99a"),color:cpuFlags[idx]?"#fff":"#888",fontFamily:"'Noto Sans JP'",textTransform:"uppercase",letterSpacing:1}}>
                 {cpuFlags[idx]?"CPU":"Human"}
@@ -968,7 +968,7 @@ function FishGame(){
         <span style={{fontSize:11,color:"#999"}}>{"Round "+cr+"/"+numRounds}</span>
         <div style={{display:"flex",gap:6}}>
           {players.map(function(p,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:4,padding:"3px 8px",borderRadius:3,background:i===cp?"#1a1a1a12":"transparent",border:i===cp?"2px solid #1a1a1a":"2px solid transparent"}}>
-            <span style={{fontSize:12}}>{PSYM[i]}</span><span style={{fontSize:11,fontWeight:i===cp?700:400}}>{p.name}</span>
+            <span style={{fontSize:14}}>{PSYM[i]}</span>
             {p.isCpu&&<span style={{fontSize:7,color:"#8a7a6a",background:"#d4c9b5",padding:"1px 3px",borderRadius:2}}>CPU</span>}
             <span style={{fontSize:10,color:"#8a7a6a"}}>{"$"+(liveScores[i]||0)}</span></div>;})}
         </div>
@@ -982,6 +982,7 @@ function FishGame(){
             <button onClick={function(){setZoom(function(z){return Math.min(5,z*1.3);});}} style={{width:28,height:28,borderRadius:4,border:"1px solid #c8b99a",background:"#e8dcc8",fontSize:16,cursor:"pointer",color:"#333"}}>+</button>
             <button onClick={function(){setZoom(function(z){return Math.max(0.3,z*0.7);});}} style={{width:28,height:28,borderRadius:4,border:"1px solid #c8b99a",background:"#e8dcc8",fontSize:16,cursor:"pointer",color:"#333"}}>-</button>
             <button onClick={function(){setZoom(1);setPan({x:0,y:0});}} style={{height:28,borderRadius:4,border:"1px solid #c8b99a",padding:"0 6px",background:"#e8dcc8",fontSize:9,cursor:"pointer",color:"#333"}}>FIT</button>
+            <button onClick={function(){if(players[cp]&&players[cp].position!==null){var nd=nodes[players[cp].position];var svgCx=vbx+vbw/2;var svgCy=vby+vbh/2;setPan({x:-(nd.x-svgCx)*zoom,y:-(nd.y-svgCy)*zoom});setZoom(function(z){return Math.max(z,1.5);});}}} style={{height:28,borderRadius:4,border:"1px solid #D64045",padding:"0 6px",background:"#D64045",fontSize:9,cursor:"pointer",color:"#fff",fontWeight:700}}>FIND</button>
           </div>
 
           <svg viewBox={vbx+" "+vby+" "+vbw+" "+vbh} style={{maxWidth:"100%",maxHeight:"calc(100vh - 46px)",transform:"scale("+zoom+") translate("+(pan.x/zoom)+"px,"+(pan.y/zoom)+"px)",transformOrigin:"center center"}}>
@@ -1043,7 +1044,24 @@ function FishGame(){
 
             {players.filter(function(p){return p.position!==null;}).map(function(p){
               var nd=nodes[p.position];
-              return <PlayerAnim key={"pa"+p.id} x={nd.x} y={nd.y} pid={p.id} active={p.id===cp&&phase==="playing"}/>;
+              var isActive=p.id===cp&&phase==="playing";
+              return <g key={"pa"+p.id}>
+                <PlayerAnim x={nd.x} y={nd.y} pid={p.id} active={isActive}/>
+                {isActive&&tp==="move"&&ml>0&&<text x={nd.x} y={nd.y-28} textAnchor="middle" fill="#1a1a1a" fontSize={12} fontWeight={900} fontFamily="'Noto Serif JP',serif">{ml}</text>}
+                {isActive&&tp==="roll"&&<g>
+                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}>
+                    <animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite"/>
+                  </circle>
+                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}>
+                    <animate attributeName="r" values="35;55" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                    <animate attributeName="opacity" values="0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
+                  </circle>
+                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#D64045" opacity={0.9}>
+                    <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/>
+                  </polygon>
+                </g>}
+              </g>;
             })}
           </svg>
         </div>
@@ -1057,8 +1075,7 @@ function FishGame(){
               return <div key={item.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",marginBottom:3,borderRadius:4,background:isActive?"#1a1a1a10":rank===0?"#f5f0e8":"transparent",border:isActive?"2px solid #1a1a1a":rank===0?"1px solid #c8b99a":"1px solid transparent"}}>
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
                   <span style={{fontSize:14,fontWeight:700,color:"#8a7a6a",width:20}}>{"#"+(rank+1)}</span>
-                  <span style={{fontSize:16}}>{PSYM[item.i]}</span>
-                  <span style={{fontSize:14,fontWeight:isActive?700:500}}>{players[item.i]?players[item.i].name:""}</span>
+                  <span style={{fontSize:18}}>{PSYM[item.i]}</span>
                 </div>
                 <span style={{fontSize:20,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</span></div>;})}
             {phase==="gameover"&&<div style={{textAlign:"center",marginTop:12,fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3}}>GAME OVER</div>}
@@ -1077,7 +1094,7 @@ function FishGame(){
                   {codCounts.map(function(item){
                     var isLeader=item.cod===maxCod&&item.cod>0;
                     return <div key={item.idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2,opacity:item.cod>0?1:0.3}}>
-                      <span style={{fontSize:11,fontWeight:isLeader?700:400}}>{PSYM[item.idx]+" "+(players[item.idx]?players[item.idx].name:"")}</span>
+                      <span style={{fontSize:11,fontWeight:isLeader?700:400}}>{PSYM[item.idx]}</span>
                       <span style={{fontSize:20,fontWeight:900,color:isLeader?"#E8A838":"#888",fontFamily:"'Noto Serif JP',serif"}}>{item.cod}</span>
                     </div>;
                   })}
@@ -1089,7 +1106,7 @@ function FishGame(){
           {/* PLAYER CONTROLS */}
           {phase!=="gameover"&&(
             <div style={{padding:12,borderBottom:"1px solid #d4c9b5"}}>
-              <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a",fontFamily:"'Noto Serif JP'",marginBottom:8}}>{PSYM[cp]+" "+(players[cp]?players[cp].name:"")}</div>
+              <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a",fontFamily:"'Noto Serif JP'",marginBottom:8}}>{PSYM[cp]}</div>
               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
                 {FISH.map(function(ft,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:4,fontSize:13,background:ft.color+"18",border:"1px solid "+ft.color+"40"}}>
                   <div style={{width:9,height:9,borderRadius:"50%",background:ft.color}}/><span style={{fontWeight:700,fontSize:14}}>{players[cp]?players[cp].fish[i]:0}</span></div>;})}
@@ -1101,15 +1118,15 @@ function FishGame(){
                     {players[cp]&&players[cp].hasTriple&&<button onClick={function(){setDm(function(d){return d===3?1:3;});}} style={{padding:"4px 10px",borderRadius:4,fontSize:10,cursor:"pointer",fontWeight:600,background:dm===3?"#D64045":"#f5f0e8",border:"1px solid "+(dm===3?"#D64045":"#c8b99a"),color:dm===3?"#fff":"#555"}}>x3</button>}
                     {players[cp]&&players[cp].hasQuad&&<button onClick={function(){setDm(function(d){return d===4?1:4;});}} style={{padding:"4px 10px",borderRadius:4,fontSize:10,cursor:"pointer",fontWeight:600,background:dm===4?"#8B5FBF":"#f5f0e8",border:"1px solid "+(dm===4?"#8B5FBF":"#c8b99a"),color:dm===4?"#fff":"#555"}}>x4</button>}
                   </div>
-                  <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:6,minHeight:44}}>
-                    {activeDice.map(function(v,i){return <div key={i} style={diceAnim?{animation:"diceShake 0.15s ease-in-out infinite"}:{}}><DiceFace value={v} size={40}/></div>;})}
+                  <div style={{display:"flex",gap:4,justifyContent:"center",marginBottom:6,minHeight:56}}>
+                    {activeDice.map(function(v,i){return <div key={i} style={diceAnim?{animation:"diceShake 0.15s ease-in-out infinite"}:{}}><DiceFace value={v} size={52}/></div>;})}
                   </div>
                   <button onClick={rollD} disabled={diceAnim} style={{width:"100%",padding:"10px",borderRadius:4,background:diceAnim?"#c8b99a":"#1a1a1a",border:"none",color:"#fff",fontSize:15,cursor:diceAnim?"default":"pointer",fontFamily:"'Noto Serif JP'",fontWeight:700,letterSpacing:1}}>
                     {diceAnim?"Rolling...":"Roll"+(dm>1?" ("+dm+"d6)":"")}</button>
                 </div>)}
               {tp==="move"&&(
                 <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={32}/>;})}</div>
+                  <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={44}/>;})}</div>
                   <span style={{fontSize:18,fontWeight:900,color:"#1B9E77",fontFamily:"'Noto Serif JP',serif"}}>{"Moves: "+ml}</span></div>)}
             </div>)}
 
@@ -1134,7 +1151,7 @@ function FishGame(){
                 return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}>
                   <div style={{display:"flex",alignItems:"center",gap:4}}>
                     <span style={{fontSize:12}}>{t.sym}</span>
-                    <span style={{fontSize:10,fontWeight:600}}>{t.name}</span>
+                    
                   </div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <div style={{display:"flex",gap:2}}>
@@ -1150,7 +1167,7 @@ function FishGame(){
           })()}
 
 <div style={{display:"flex",borderBottom:"1px solid #d4c9b5"}}>
-            {["market","fish"].map(function(t){return <button key={t} onClick={function(){setSideTab(t);}} style={{flex:1,padding:"6px",fontSize:9,fontWeight:sideTab===t?700:400,background:sideTab===t?"#f0e6d3":"transparent",border:"none",borderBottom:sideTab===t?"2px solid #1a1a1a":"2px solid transparent",cursor:"pointer",textTransform:"uppercase",letterSpacing:1,color:"#1a1a1a"}}>{t}</button>;})}
+            {["fish"].map(function(t){return <button key={t} onClick={function(){setSideTab(t);}} style={{flex:1,padding:"6px",fontSize:9,fontWeight:sideTab===t?700:400,background:sideTab===t?"#f0e6d3":"transparent",border:"none",borderBottom:sideTab===t?"2px solid #1a1a1a":"2px solid transparent",cursor:"pointer",textTransform:"uppercase",letterSpacing:1,color:"#1a1a1a"}}>{t}</button>;})}
           </div>
 
           {sideTab==="score"&&(
