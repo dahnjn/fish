@@ -999,7 +999,7 @@ function FishGame(){
                 var lvl=diamondLevels[i]||1;
                 return <g key={"dm"+i}>
                   <polygon points={pts} fill="none" stroke="#8a7a6a" strokeWidth={0.6}/>
-                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#1a1a1a" fontSize={16} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#1a1a1a" fontSize={28} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
                 </g>;
               });
             })()}
@@ -1047,7 +1047,7 @@ function FishGame(){
               var isActive=p.id===cp&&phase==="playing";
               return <g key={"pa"+p.id}>
                 <PlayerAnim x={nd.x} y={nd.y} pid={p.id} active={isActive}/>
-                {isActive&&tp==="move"&&ml>0&&<text x={nd.x} y={nd.y-28} textAnchor="middle" fill="#1a1a1a" fontSize={12} fontWeight={900} fontFamily="'Noto Serif JP',serif">{ml}</text>}
+                {isActive&&tp==="move"&&ml>0&&<text x={nd.x} y={nd.y-32} textAnchor="middle" fill="#1a1a1a" fontSize={24} fontWeight={900} fontFamily="'Noto Serif JP',serif">{ml}</text>}
                 {isActive&&tp==="roll"&&<g>
                   <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}>
                     <animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/>
