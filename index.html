@@ -998,7 +998,7 @@ function FishGame(){
                 var lvl=diamondLevels[i]||1;
                 return <g key={"dm"+i}>
                   <polygon points={pts} fill="none" stroke="#8a7a6a" strokeWidth={0.6}/>
-                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#E8A838" fontSize={16} fontWeight={900} fontFamily="'Noto Serif JP',serif" opacity={0.4}>{"x"+lvl}</text>
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#1a1a1a" fontSize={16} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
                 </g>;
               });
             })()}
@@ -1064,25 +1064,23 @@ function FishGame(){
             {phase==="gameover"&&<div style={{textAlign:"center",marginTop:12,fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3}}>GAME OVER</div>}
             {/* Black Cod Bonus Tracker */}
             {(function(){
-              var maxCod=0,maxPlayer=-1;
-              players.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxCod){maxCod=pc;maxPlayer=i;}});
+              var codCounts=players.map(function(pl,i){return{idx:i,cod:pl.blackCod||0};});
+              codCounts.sort(function(a,b){return b.cod-a.cod;});
+              var maxCod=codCounts[0]?codCounts[0].cod:0;
               return <div style={{marginTop:6,padding:"8px 10px",borderRadius:4,background:"#2a2a2a",color:"#fff"}}>
-                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:4}}>
+                <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
                   <span style={{fontSize:10,fontWeight:700,letterSpacing:1}}>BLACK COD BONUS</span>
                   <span style={{fontSize:16,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+blackCodBonus}</span>
                 </div>
                 {maxCod===0?<div style={{fontSize:10,color:"#aaa"}}>No cod banked yet</div>
                 :<div>
-                  <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                    <span style={{fontSize:11,fontWeight:600}}>{PSYM[maxPlayer]+" "+(players[maxPlayer]?players[maxPlayer].name:"")+" leads"}</span>
-                    <span style={{fontSize:13,fontWeight:900,color:"#E8A838"}}>{maxCod+" cod"}</span>
-                  </div>
-                  <div style={{display:"flex",gap:8,marginTop:4}}>
-                    {players.map(function(pl,i){var pc=pl.blackCod||0;return <div key={i} style={{fontSize:10,opacity:pc>0?1:0.4}}>
-                      <span>{PSYM[i]}</span><span style={{fontWeight:700,marginLeft:2}}>{pc}</span>
-                    </div>;})}
-                  </div>
-                  <div style={{fontSize:10,color:"#E8A838",fontWeight:700,marginTop:4}}>{"Need "+(maxCod+1)+" cod to take the lead"}</div>
+                  {codCounts.map(function(item){
+                    var isLeader=item.cod===maxCod&&item.cod>0;
+                    return <div key={item.idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2,opacity:item.cod>0?1:0.3}}>
+                      <span style={{fontSize:11,fontWeight:isLeader?700:400}}>{PSYM[item.idx]+" "+(players[item.idx]?players[item.idx].name:"")}</span>
+                      <span style={{fontSize:20,fontWeight:900,color:isLeader?"#E8A838":"#888",fontFamily:"'Noto Serif JP',serif"}}>{item.cod}</span>
+                    </div>;
+                  })}
                 </div>}
               </div>;
             })()}
