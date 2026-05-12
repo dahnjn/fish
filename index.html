@@ -1102,17 +1102,15 @@ function FishGame(){
               var nd2=nodes[nId];
               var avgP=0;for(var fi3=0;fi3<5;fi3++){avgP+=(prices[nId]&&prices[nId][fi3]!==undefined?prices[nId][fi3]:100);}avgP=avgP/5;
               var cR=Math.min(56,Math.max(14,14+(avgP-20)*0.5));
-              var priceText="";
               if(accepts.length===1){
                 var ft2=accepts[0];
                 var pr2=prices[nId]&&prices[nId][ft2]!==undefined?prices[nId][ft2]:100;
-                priceText="$"+pr2;
+                return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[ft2].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr2}</text>;
               }else{
                 var cycFt=accepts[priceIdx%accepts.length];
                 var pr3=prices[nId]&&prices[nId][cycFt]!==undefined?prices[nId][cycFt]:100;
-                priceText=FISH[cycFt].short+" $"+pr3;
+                return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[cycFt].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr3}</text>;
               }
-              return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-6} textAnchor="middle" fill="#1a1a1a" fontSize={8} fontWeight={700} fontFamily="'Noto Serif JP',serif">{priceText}</text>;
             })}
 
             {players.filter(function(p){return p.position!==null;}).map(function(p){
