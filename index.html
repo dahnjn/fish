@@ -516,6 +516,7 @@ function FishGame(){
   useEffect(function(){var t=setInterval(function(){setPriceIdx(function(p){return(p+1)%5;});},1500);return function(){clearInterval(t);};},[]);
   var [diamondLevels,setDiamondLevels]=useState([1,1,1,1]); // level per diamond (1,2,3...)
   var [sideTab,setSideTab]=useState("fish");
+  var [expandedPlayer,setExpandedPlayer]=useState(null);
   var [history,setHistory]=useState([]);
   var [saveMsg,setSaveMsg]=useState("");
 
@@ -1175,12 +1176,52 @@ function FishGame(){
             <div style={{fontSize:11,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:700}}>Scoreboard</div>
             {scores&&scores.map(function(sc,i){return{sc:sc,i:i};}).sort(function(a,b){return b.sc-a.sc;}).map(function(item,rank){
               var isActive=item.i===cp;
-              return <div key={item.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",marginBottom:3,borderRadius:4,background:isActive?"#1a1a1a10":rank===0?"#f5f0e8":"transparent",border:isActive?"2px solid #1a1a1a":rank===0?"1px solid #c8b99a":"1px solid transparent"}}>
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <span style={{fontSize:14,fontWeight:700,color:"#8a7a6a",width:20}}>{"#"+(rank+1)}</span>
-                  <span style={{fontSize:18}}>{PSYM[item.i]}</span>
+              var pi=item.i;
+              var hasCodBonus=false;
+              var codBonusAmt=0;
+              // Check if this player has the cod bonus
+              var maxCodP=-1,maxCodV=0;
+              players.forEach(function(pl,idx){var pc=pl.blackCod||0;if(pc>maxCodV){maxCodV=pc;maxCodP=idx;}});
+              if(maxCodP===pi&&maxCodV>0){hasCodBonus=true;codBonusAmt=blackCodBonus;}
+              var fishEarnings=item.sc-(hasCodBonus?codBonusAmt:0);
+              var isExpanded=expandedPlayer===pi;
+              return <div key={pi}>
+                <div onClick={function(){setExpandedPlayer(isExpanded?null:pi);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",marginBottom:1,borderRadius:4,background:isActive?"#1a1a1a10":rank===0?"#f5f0e8":"transparent",border:isActive?"2px solid #1a1a1a":rank===0?"1px solid #c8b99a":"1px solid transparent",cursor:"pointer"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <span style={{fontSize:14,fontWeight:700,color:"#8a7a6a",width:20}}>{"#"+(rank+1)}</span>
+                    <span style={{fontSize:18}}>{PSYM[pi]}</span>
+                  </div>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{fontSize:20,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</div>
+                    {hasCodBonus&&<div style={{fontSize:8,color:"#E8A838",fontWeight:700}}>{"incl. $"+codBonusAmt+" cod bonus"}</div>}
+                  </div>
                 </div>
-                <span style={{fontSize:20,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</span></div>;})}
+                {isExpanded&&<div style={{padding:"4px 10px 8px",marginBottom:3,background:"#f5f0e8",borderRadius:"0 0 4px 4px",border:"1px solid #d4c9b5",borderTop:"none"}}>
+                  {cn.map(function(cid,ci){
+                    var c=cd[cid]||{};var accepted=CITY_ACCEPTS[ci]||[];var cityEarn=0;var details=[];
+                    accepted.forEach(function(ft){
+                      if(ft===5)return;
+                      var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
+                      var myCnt=(del[pi]||0);
+                      if(myCnt>0&&tot>0){
+                        var earned=Math.round(100*myCnt/tot);
+                        var pricePerFish=Math.round(100/tot);
+                        cityEarn+=earned;
+                        details.push({ft:ft,cnt:myCnt,price:pricePerFish,earned:earned});
+                      }
+                    });
+                    if(details.length===0)return null;
+                    return <div key={ci} style={{marginBottom:4}}>
+                      <div style={{fontSize:10,fontWeight:700}}>{CFULL[ci]+" — $"+cityEarn}</div>
+                      {details.map(function(d){return <div key={d.ft} style={{fontSize:9,color:"#8a7a6a",marginLeft:8,display:"flex",gap:4,alignItems:"center"}}>
+                        <div style={{width:6,height:6,borderRadius:"50%",background:FISH[d.ft].color}}/>
+                        <span>{d.cnt+" × $"+d.price+" = $"+d.earned}</span>
+                      </div>;})}
+                    </div>;
+                  })}
+                  {hasCodBonus&&<div style={{marginTop:4,fontSize:10,color:"#E8A838",fontWeight:700}}>{"Black Cod Bonus: $"+codBonusAmt+" ("+maxCodV+" cod)"}</div>}
+                </div>}
+              </div>;})}
             {phase==="gameover"&&<div style={{marginTop:12}}>
               <div style={{textAlign:"center",fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3,marginBottom:10}}>GAME OVER</div>
               <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>City Breakdown</div>
