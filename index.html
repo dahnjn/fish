@@ -207,14 +207,16 @@ function hv(cx,cy,r,i){var a=Math.PI/2-i*Math.PI/3;return[cx+r*Math.cos(a),cy-r*
 function hm(cx,cy,r,i){var v1=hv(cx,cy,r,i),v2=hv(cx,cy,r,(i+1)%6);return[(v1[0]+v2[0])/2,(v1[1]+v2[1])/2];}
 function dst(a,b){return Math.hypot(a[0]-b[0],a[1]-b[1]);}
 
-function buildBoard(){
+function buildBoard(blitz){
   var edges=new Set(),mm=new Map(),nodes=[],ar=[];
   HC.forEach(function(hc,hi){
     var cx=hc[0],cy=hc[1],h=[];
     h.push({x:cx,y:cy,type:"city",hi:hi});
     var i,v,m,d;
-    for(i=0;i<6;i++){v=hv(cx,cy,R,i);d=dst(v,[cx,cy]);h.push({x:cx+MID_R*(v[0]-cx)/d,y:cy+MID_R*(v[1]-cy)/d,type:"small",hi:hi});}
-    for(i=0;i<6;i++){m=hm(cx,cy,R,i);d=dst(m,[cx,cy]);h.push({x:cx+MID_R*(m[0]-cx)/d,y:cy+MID_R*(m[1]-cy)/d,type:"small",hi:hi});}
+    if(!blitz){
+      for(i=0;i<6;i++){v=hv(cx,cy,R,i);d=dst(v,[cx,cy]);h.push({x:cx+MID_R*(v[0]-cx)/d,y:cy+MID_R*(v[1]-cy)/d,type:"small",hi:hi});}
+      for(i=0;i<6;i++){m=hm(cx,cy,R,i);d=dst(m,[cx,cy]);h.push({x:cx+MID_R*(m[0]-cx)/d,y:cy+MID_R*(m[1]-cy)/d,type:"small",hi:hi});}
+    }
     for(i=0;i<6;i++){v=hv(cx,cy,R,i);h.push({x:v[0],y:v[1],type:"small",hi:hi});}
     for(i=0;i<6;i++){m=hm(cx,cy,R,i);h.push({x:m[0],y:m[1],type:"small",hi:hi});}
     ar.push.apply(ar,h);
@@ -230,14 +232,22 @@ function buildBoard(){
   var ro=0,srt=function(a,b){return a-b;};
   HC.forEach(function(){
     var g=function(li){return mm.get(ro+li);};var i;
-    for(i=0;i<6;i++){edges.add([g(0),g(1+i)].sort(srt).join(","));}
-    for(i=0;i<6;i++){edges.add([g(0),g(7+i)].sort(srt).join(","));}
-    var cr=[];for(i=0;i<6;i++){cr.push(g(1+i));cr.push(g(7+i));}
-    for(i=0;i<12;i++)edges.add([cr[i],cr[(i+1)%12]].sort(srt).join(","));
-    for(i=0;i<6;i++){edges.add([g(1+i),g(13+i)].sort(srt).join(","));}
-    for(i=0;i<6;i++){edges.add([g(7+i),g(19+i)].sort(srt).join(","));}
-    for(i=0;i<6;i++){edges.add([g(13+i),g(19+i)].sort(srt).join(","));edges.add([g(19+i),g(13+(i+1)%6)].sort(srt).join(","));}
-    ro+=25;
+    if(blitz){
+      // Blitz: city(0), hex-v(1-6), hex-m(7-12)
+      for(i=0;i<6;i++){edges.add([g(0),g(1+i)].sort(srt).join(","));}
+      for(i=0;i<6;i++){edges.add([g(0),g(7+i)].sort(srt).join(","));}
+      for(i=0;i<6;i++){edges.add([g(1+i),g(7+i)].sort(srt).join(","));edges.add([g(7+i),g(1+(i+1)%6)].sort(srt).join(","));}
+      ro+=13;
+    }else{
+      for(i=0;i<6;i++){edges.add([g(0),g(1+i)].sort(srt).join(","));}
+      for(i=0;i<6;i++){edges.add([g(0),g(7+i)].sort(srt).join(","));}
+      var cr=[];for(i=0;i<6;i++){cr.push(g(1+i));cr.push(g(7+i));}
+      for(i=0;i<12;i++)edges.add([cr[i],cr[(i+1)%12]].sort(srt).join(","));
+      for(i=0;i<6;i++){edges.add([g(1+i),g(13+i)].sort(srt).join(","));}
+      for(i=0;i<6;i++){edges.add([g(7+i),g(19+i)].sort(srt).join(","));}
+      for(i=0;i<6;i++){edges.add([g(13+i),g(19+i)].sort(srt).join(","));edges.add([g(19+i),g(13+(i+1)%6)].sort(srt).join(","));}
+      ro+=25;
+    }
   });
   // Add 4 diamond outposts at cardinal positions (top, bottom, left, right)
   // Each diamond has 4 corner nodes + 4 midpoint nodes = 8 nodes, type="diamond"
@@ -479,9 +489,10 @@ function FishGame(){
   var [blackCodBonus,setBlackCodBonus]=useState(500);
   var [numPlayers,setNumPlayers]=useState(4);
   var [mapType,setMapType]=useState("random");
+  var [blitzMode,setBlitzMode]=useState(false);
   var [pn,setPn]=useState(["Player 1","Player 2","Player 3","Player 4"]);
   var [cpuFlags,setCpuFlags]=useState([false,false,false,false]);
-  var bd=useMemo(function(){return buildBoard();},[]);
+  var bd=useMemo(function(){return buildBoard(blitzMode);},[blitzMode]);
   var nodes=bd.nodes, el=bd.el, adj=bd.adj, diamondNodeIds=bd.diamondNodeIds||[];
   var [fm,setFm]=useState({});
   var [players,setPlayers]=useState([]);
@@ -509,12 +520,12 @@ function FishGame(){
   var [saveMsg,setSaveMsg]=useState("");
 
   function getGameState(){
-    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags,blackCodBonus:blackCodBonus,diamondLevels:diamondLevels});
+    return JSON.stringify({fm:fm,players:players,cp:cp,cr:cr,cd:cd,tp:tp,ml:ml,sp:sp,diceValues:diceValues,dm:dm,phase:phase,numRounds:numRounds,numPlayers:numPlayers,mapType:mapType,pn:pn,cpuFlags:cpuFlags,blackCodBonus:blackCodBonus,diamondLevels:diamondLevels,blitzMode:blitzMode});
   }
   function loadGameState(str){
     try{
       var s=JSON.parse(str);
-      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);if(s.cpuFlags)setCpuFlags(s.cpuFlags);if(s.blackCodBonus!==undefined)setBlackCodBonus(s.blackCodBonus);if(s.diamondLevels)setDiamondLevels(s.diamondLevels);
+      setFm(s.fm);setPlayers(s.players);setCp(s.cp);setCr(s.cr);setCd(s.cd);setTp(s.tp);setMl(s.ml);setSp(s.sp);setDiceValues(s.diceValues);setDm(s.dm);setPhase(s.phase);setNumRounds(s.numRounds);setNumPlayers(s.numPlayers);setMapType(s.mapType);setPn(s.pn);if(s.cpuFlags)setCpuFlags(s.cpuFlags);if(s.blackCodBonus!==undefined)setBlackCodBonus(s.blackCodBonus);if(s.diamondLevels)setDiamondLevels(s.diamondLevels);if(s.blitzMode!==undefined)setBlitzMode(s.blitzMode);
       return true;
     }catch(e){return false;}
   }
@@ -527,20 +538,30 @@ function FishGame(){
     setHistory(function(h){return h.slice(0,-1);});
     loadGameState(prev);
   }
-  async function saveGame(){
+  function saveGame(){
     try{
-      await window.storage.set("fish_save",getGameState());
-      setSaveMsg("Saved!");setTimeout(function(){setSaveMsg("");},1500);
+      var data=getGameState();
+      var blob=new Blob([data],{type:"application/json"});
+      var url=URL.createObjectURL(blob);
+      var a=document.createElement("a");
+      a.href=url;a.download="fish_save.json";a.click();
+      URL.revokeObjectURL(url);
+      setSaveMsg("Downloaded!");setTimeout(function(){setSaveMsg("");},1500);
     }catch(e){setSaveMsg("Save failed");setTimeout(function(){setSaveMsg("");},1500);}
   }
-  async function loadGame(){
-    try{
-      var result=await window.storage.get("fish_save");
-      if(result&&result.value){
-        if(loadGameState(result.value)){setSaveMsg("Loaded!");setTimeout(function(){setSaveMsg("");},1500);}
-        else{setSaveMsg("Bad data");setTimeout(function(){setSaveMsg("");},1500);}
-      }else{setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
-    }catch(e){setSaveMsg("No save found");setTimeout(function(){setSaveMsg("");},1500);}
+  function loadGame(){
+    var input=document.createElement("input");
+    input.type="file";input.accept=".json";
+    input.onchange=function(e){
+      var file=e.target.files[0];if(!file)return;
+      var reader=new FileReader();
+      reader.onload=function(ev){
+        if(loadGameState(ev.target.result)){setSaveMsg("Loaded!");setTimeout(function(){setSaveMsg("");},1500);}
+        else{setSaveMsg("Bad file");setTimeout(function(){setSaveMsg("");},1500);}
+      };
+      reader.readAsText(file);
+    };
+    input.click();
   }
 
   var minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
@@ -991,6 +1012,11 @@ function FishGame(){
               {Object.keys(MAP_PRESETS).map(function(key){var mp=MAP_PRESETS[key];return <option key={key} value={key}>{mp.icon+" "+mp.name+" — "+mp.desc}</option>;})}
             </select>
           </div>
+          <div style={{display:"flex",alignItems:"center",gap:8}}>
+            <label style={{fontSize:9,color:"#999",textTransform:"uppercase",letterSpacing:1}}>Blitz</label>
+            <button onClick={function(){setBlitzMode(!blitzMode);}} style={{padding:"4px 12px",borderRadius:4,fontSize:11,cursor:"pointer",fontWeight:600,background:blitzMode?"#D64045":"#fff",border:"1px solid "+(blitzMode?"#D64045":"#ddd"),color:blitzMode?"#fff":"#555"}}>{blitzMode?"ON":"OFF"}</button>
+            <span style={{fontSize:9,color:"#aaa"}}>{blitzMode?"No inner circles":"Standard board"}</span>
+          </div>
           {playerInputs}
           <button onClick={startGame} style={{marginTop:4,padding:"10px",borderRadius:4,background:"#2a2a2a",border:"none",color:"#fff",fontSize:14,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>START</button>
         </div></div>);
@@ -1068,7 +1094,7 @@ function FishGame(){
 
             {curNode!==null&&rn.map(function(nId){var from=nodes[curNode],to=nodes[nId];
               return <g key={"rd"+nId} style={{cursor:"pointer"}} onClick={function(){moveN(nId);}}>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="transparent" strokeWidth={6}/>
+                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="transparent" strokeWidth={14}/>
                 <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#1a1a1a" strokeWidth={1} strokeDasharray="2,2" opacity={0.5}/>
               </g>;})}
 
@@ -1088,6 +1114,7 @@ function FishGame(){
               }
               var clickable=(tp==="move"&&rn.indexOf(node.id)>=0);
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
+                {clickable&&<circle cx={node.x} cy={node.y} r={NR+8} fill="transparent" stroke="none"/>}
                 {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill={CITY_COLORS[cn.indexOf(node.id)]||"#1a1a1a"} stroke="#1a1a1a" strokeWidth={1}/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
                 :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
                 :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={ft===5?"#3a3a3a":""+FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>
@@ -1149,7 +1176,49 @@ function FishGame(){
                   <span style={{fontSize:18}}>{PSYM[item.i]}</span>
                 </div>
                 <span style={{fontSize:20,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</span></div>;})}
-            {phase==="gameover"&&<div style={{textAlign:"center",marginTop:12,fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3}}>GAME OVER</div>}
+            {phase==="gameover"&&<div style={{marginTop:12}}>
+              <div style={{textAlign:"center",fontFamily:"'Noto Serif JP'",fontSize:18,fontWeight:900,letterSpacing:3,marginBottom:10}}>GAME OVER</div>
+              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>City Breakdown</div>
+              {cn.map(function(cid,ci){
+                var c=cd[cid]||{};var accepted=CITY_ACCEPTS[ci]||[];
+                var cityData=[];
+                accepted.forEach(function(ft){
+                  if(ft===5)return;
+                  var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
+                  if(tot>0){
+                    var perPlayer=[];
+                    Object.entries(del).forEach(function(e){
+                      var pid=Number(e[0]),cnt=e[1];
+                      var earned=Math.round(100*cnt/tot);
+                      perPlayer.push({pid:pid,cnt:cnt,earned:earned});
+                    });
+                    cityData.push({ft:ft,tot:tot,perPlayer:perPlayer});
+                  }
+                });
+                if(cityData.length===0)return null;
+                return <div key={ci} style={{marginBottom:6,padding:6,background:"#f5f0e8",borderRadius:4,border:"1px solid #d4c9b5"}}>
+                  <div style={{fontSize:11,fontWeight:700,marginBottom:3}}>{CFULL[ci]}</div>
+                  {cityData.map(function(d){
+                    return <div key={d.ft} style={{marginBottom:2}}>
+                      <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:1}}>
+                        <div style={{width:8,height:8,borderRadius:"50%",background:FISH[d.ft].color}}/>
+                        <span style={{fontSize:9,fontWeight:600}}>{FISH[d.ft].short+" ("+d.tot+" total)"}</span>
+                      </div>
+                      <div style={{display:"flex",gap:4,flexWrap:"wrap",marginLeft:12}}>
+                        {d.perPlayer.map(function(pp){return <span key={pp.pid} style={{fontSize:9}}>{PSYM[pp.pid]+" "+pp.cnt+"fish=$"+pp.earned}</span>;})}
+                      </div>
+                    </div>;
+                  })}
+                </div>;
+              })}
+              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginTop:8,marginBottom:4}}>Black Cod Bonus</div>
+              <div style={{padding:4,background:"#f5f0e8",borderRadius:4,border:"1px solid #d4c9b5",fontSize:10}}>
+                {(function(){var maxC=0,maxP=-1;players.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxC){maxC=pc;maxP=i;}});
+                  if(maxC===0)return <span>No cod banked</span>;
+                  return <div>{PSYM[maxP]+" wins $"+blackCodBonus+" with "+maxC+" cod"}</div>;
+                })()}
+              </div>
+            </div>}
             {/* Black Cod Bonus Tracker */}
             {(function(){
               var codCounts=players.map(function(pl,i){return{idx:i,cod:pl.blackCod||0};});
