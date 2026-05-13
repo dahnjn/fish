@@ -150,7 +150,13 @@ function populateMap(mapType, nodes, sn, diamondNodeIds) {
 
 // Repopulate a single hex when depleted
 function repopHex(nf, hexIdx, nodes, mapType) {
-  var hs = nodes.filter(function(n) { return n.hi === hexIdx && n.type === "small" && n.type !== "diamond"; });
+  // Find all small nodes belonging to this hex - by hi tag AND by proximity to hex center
+  var hcx=HC[hexIdx][0], hcy=HC[hexIdx][1];
+  var hs = nodes.filter(function(n) {
+    if(n.type !== "small") return false;
+    // Include if hi matches OR if within R distance of hex center
+    return n.hi === hexIdx || dst([n.x,n.y],[hcx,hcy]) <= R + 2;
+  });
   if (mapType === "provinces") {
     var provinceMap = {0: 0, 2: 4, 5: 3, 7: 1};
     if (provinceMap[hexIdx] !== undefined) {
@@ -827,8 +833,28 @@ function FishGame(){
         p.fish[ft]++;
       }
       nf[nId]=null;
-      var hs=nodes.filter(function(n){return n.hi===node.hi&&n.type==="small";});
-      if(node.type==="small"&&hs.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;}))repopHex(nf, node.hi, nodes, mapType);
+      // Check hex depletion: find all small nodes near this hex center
+      if(node.type==="small"){
+        var hcx2=HC[node.hi][0],hcy2=HC[node.hi][1];
+        var hexNodes=nodes.filter(function(n){return n.type==="small"&&dst([n.x,n.y],[hcx2,hcy2])<=R+2;});
+        var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
+        if(allEmpty){
+          // Repopulate all nodes near this hex center
+          hexNodes.forEach(function(n){nf[n.id]=rndFish();});
+          // Apply map-specific logic
+          if(mapType==="provinces"){
+            var pm2={0:0,2:4,5:3,7:1};
+            if(pm2[node.hi]!==undefined)hexNodes.forEach(function(n){nf[n.id]=pm2[node.hi];});
+          }else if(mapType==="monoculture"){
+            var cts=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts[nf[n2.id]]++;});
+            var dom=0;for(var di2=1;di2<5;di2++){if(cts[di2]>cts[dom])dom=di2;}
+            hexNodes.forEach(function(n){nf[n.id]=dom;});
+          }else if(mapType==="cod"){
+            var codMap={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
+            if(codMap[node.hi]!==undefined)hexNodes.forEach(function(n){nf[n.id]=codMap[node.hi];});
+          }
+        }
+      }
       // Diamond depletion: if all 8 nodes in this diamond are empty, level up and refill
       if(node.type==="diamond"){
         var dIdx2=Math.floor((diamondNodeIds.indexOf(nId))/8);
