@@ -253,7 +253,7 @@ function buildBoard(blitz){
   // Each diamond has 4 corner nodes + 4 midpoint nodes = 8 nodes, type="diamond"
   // Connected to main board at the nearest hex edge midpoint
   var boardCx = W, boardCy = 1.5 * R;
-  var diamondR = 60;
+  var diamondR = 100;
   var diamondPositions = [
     {x: boardCx, y: -R - diamondR*4.5, connectDir: "top"},       // top
     {x: boardCx, y: 3*R + R + diamondR*4.5, connectDir: "bot"},  // bottom
@@ -904,7 +904,7 @@ function FishGame(){
     var dx=n.x-boardCx,dy=n.y-boardCy;var d=Math.hypot(dx,dy)||1;var push=R*1.2;
     return{x:n.x+(dx/d)*push,y:n.y+(dy/d)*push};});},[cn,nodes]);
 
-  var NR=9;
+  var NR=12;
   var curNode=sp.length>0?sp[sp.length-1]:null;
   var occupiedCities=useMemo(function(){
     var oc={};
@@ -1076,7 +1076,7 @@ function FishGame(){
             })}
             {/* Diamond outlines with level numbers */}
             {(function(){
-              var bcx=W,bcy=1.5*R,dr=60;
+              var bcx=W,bcy=1.5*R,dr=100;
               var dps=[[bcx,-(R+dr*4.5)],[bcx,3*R+R+dr*4.5],[-(R*0.6+dr*4.5),1.5*R],[2*W+R*0.6+dr*4.5,1.5*R]];
               return dps.map(function(dp,i){
                 var cx=dp[0],cy=dp[1];
@@ -1184,7 +1184,7 @@ function FishGame(){
               players.forEach(function(pl,idx){var pc=pl.blackCod||0;if(pc>maxCodV){maxCodV=pc;maxCodP=idx;}});
               if(maxCodP===pi&&maxCodV>0){hasCodBonus=true;codBonusAmt=blackCodBonus;}
               var fishEarnings=item.sc-(hasCodBonus?codBonusAmt:0);
-              var isExpanded=expandedPlayer===pi;
+              var isExpanded=expandedPlayer===pi||(expandedPlayer===null&&pi===cp);
               return <div key={pi}>
                 <div onClick={function(){setExpandedPlayer(isExpanded?null:pi);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",marginBottom:1,borderRadius:4,background:isActive?"#1a1a1a10":rank===0?"#f5f0e8":"transparent",border:isActive?"2px solid #1a1a1a":rank===0?"1px solid #c8b99a":"1px solid transparent",cursor:"pointer"}}>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
