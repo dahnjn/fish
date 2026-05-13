@@ -905,6 +905,11 @@ function FishGame(){
 
   var NR=9;
   var curNode=sp.length>0?sp[sp.length-1]:null;
+  var occupiedCities=useMemo(function(){
+    var oc={};
+    players.forEach(function(pl){if(pl.position!==null&&cn.indexOf(pl.position)>=0)oc[pl.position]=true;});
+    return oc;
+  },[players,cn]);
 
   // Event overlay
   var eventEl=null;
@@ -1083,7 +1088,7 @@ function FishGame(){
               });
             })()}
             {HC.map(function(hc,i){return <circle key={"c"+i} cx={hc[0]} cy={hc[1]} r={MID_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/>;})}
-            {el.map(function(pair,i){return <line key={i} x1={nodes[pair[0]].x} y1={nodes[pair[0]].y} x2={nodes[pair[1]].x} y2={nodes[pair[1]].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
+            {el.map(function(pair,i){var a=pair[0],b=pair[1];if(occupiedCities[a]||occupiedCities[b])return <line key={i} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} stroke="#5a4a3a" strokeWidth={0.8} opacity={0.1}/>;return <line key={i} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
 
             {cityLabelPos.map(function(lp,i){return <g key={"clo"+i}>
               <text x={lp.x} y={lp.y-5} textAnchor="middle" fill="#1a1a1a" fontSize={18} fontFamily="'Noto Serif JP',serif" fontWeight={900}>{CFULL[i]}</text>
@@ -1115,7 +1120,7 @@ function FishGame(){
               var clickable=(tp==="move"&&rn.indexOf(node.id)>=0);
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
                 {clickable&&<circle cx={node.x} cy={node.y} r={NR+8} fill="transparent" stroke="none"/>}
-                {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill={CITY_COLORS[cn.indexOf(node.id)]||"#1a1a1a"} stroke="#1a1a1a" strokeWidth={1}/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text></React.Fragment>
+                {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill={CITY_COLORS[cn.indexOf(node.id)]||"#1a1a1a"} stroke={occupiedCities[node.id]?"#fff":"#1a1a1a"} strokeWidth={occupiedCities[node.id]?3:1}/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text>{occupiedCities[node.id]&&<React.Fragment><line x1={node.x-cityR*0.5} y1={node.y-cityR*0.5} x2={node.x+cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/><line x1={node.x+cityR*0.5} y1={node.y-cityR*0.5} x2={node.x-cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/></React.Fragment>}</React.Fragment>
                 :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
                 :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={ft===5?"#3a3a3a":""+FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>
                 :<circle cx={node.x} cy={node.y} r={NR} fill="none" stroke="#1a1a1a" strokeWidth={1.5}/>}
