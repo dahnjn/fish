@@ -822,7 +822,7 @@ function FishGame(){
     var np=players.slice();var p=Object.assign({},np[cp]);p.position=nId;
     var node=nodes[nId];var nf=Object.assign({},fm);
     var nd=JSON.parse(JSON.stringify(cd));var ended=false;
-    if(nf[nId]!==undefined&&nf[nId]!==null&&(node.type==="small"||node.type==="diamond")){
+    if(nf[nId]!==undefined&&nf[nId]!==null&&(node.type==="small"||node.type==="diamond"||node.type==="start")){
       var ft=nf[nId];p.fish=p.fish.slice();
       if(ft===5&&node.type==="diamond"){
         // Black Cod on diamond: catch amount = diamond level
@@ -833,26 +833,17 @@ function FishGame(){
         p.fish[ft]++;
       }
       nf[nId]=null;
-      // Check hex depletion: find all small nodes near this hex center
-      if(node.type==="small"){
-        var hcx2=HC[node.hi][0],hcy2=HC[node.hi][1];
-        var hexNodes=nodes.filter(function(n){return n.type==="small"&&dst([n.x,n.y],[hcx2,hcy2])<=R+2;});
+      // Check hex depletion: find all fishable nodes near this hex center
+      if(node.type==="small"||node.type==="start"){
+        var hcx2=HC[node.hi]?HC[node.hi][0]:node.x;
+        var hcy2=HC[node.hi]?HC[node.hi][1]:node.y;
+        var hexNodes=nodes.filter(function(n){
+          if(n.type!=="small"&&n.type!=="start")return false;
+          return Math.hypot(n.x-hcx2,n.y-hcy2)<=R+2;
+        });
         var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
         if(allEmpty){
-          // Repopulate all nodes near this hex center
           hexNodes.forEach(function(n){nf[n.id]=rndFish();});
-          // Apply map-specific logic
-          if(mapType==="provinces"){
-            var pm2={0:0,2:4,5:3,7:1};
-            if(pm2[node.hi]!==undefined)hexNodes.forEach(function(n){nf[n.id]=pm2[node.hi];});
-          }else if(mapType==="monoculture"){
-            var cts=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts[nf[n2.id]]++;});
-            var dom=0;for(var di2=1;di2<5;di2++){if(cts[di2]>cts[dom])dom=di2;}
-            hexNodes.forEach(function(n){nf[n.id]=dom;});
-          }else if(mapType==="cod"){
-            var codMap={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
-            if(codMap[node.hi]!==undefined)hexNodes.forEach(function(n){nf[n.id]=codMap[node.hi];});
-          }
         }
       }
       // Diamond depletion: if all 8 nodes in this diamond are empty, level up and refill
@@ -1148,7 +1139,7 @@ function FishGame(){
               return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
                 {clickable&&<circle cx={node.x} cy={node.y} r={NR+8} fill="transparent" stroke="none"/>}
                 {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill={CITY_COLORS[cn.indexOf(node.id)]||"#1a1a1a"} stroke={occupiedCities[node.id]?"#fff":"#1a1a1a"} strokeWidth={occupiedCities[node.id]?3:1}/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text>{occupiedCities[node.id]&&<React.Fragment><line x1={node.x-cityR*0.5} y1={node.y-cityR*0.5} x2={node.x+cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/><line x1={node.x+cityR*0.5} y1={node.y-cityR*0.5} x2={node.x-cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/></React.Fragment>}</React.Fragment>
-                :isStart?<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>
+                :isStart?(hasFish?<circle cx={node.x} cy={node.y} r={NR} fill={ft===5?"#3a3a3a":FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>:<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>)
                 :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={ft===5?"#3a3a3a":""+FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>
                 :<circle cx={node.x} cy={node.y} r={NR} fill="none" stroke="#1a1a1a" strokeWidth={1.5}/>}
               </g>;
