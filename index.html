@@ -1069,6 +1069,46 @@ function FishGame(){
       </div>
       <div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
         {eventEl}
+        {phase==="gameover"&&(function(){
+          var finalScores=fs||liveScores;
+          var ranked=finalScores.map(function(sc,i){return{sc:sc,i:i};}).sort(function(a,b){return b.sc-a.sc;});
+          var winner=ranked[0];
+          var maxCod3=0,codWinner3=-1;
+          players.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxCod3){maxCod3=pc;codWinner3=i;}});
+          return <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.7)",zIndex:30}}>
+            <div style={{background:"#f0e6d3",borderRadius:16,padding:"32px 40px",maxWidth:420,width:"90%",maxHeight:"85vh",overflow:"auto",boxShadow:"0 16px 64px rgba(0,0,0,0.4)"}}>
+              <div style={{textAlign:"center",marginBottom:16}}>
+                <div style={{fontSize:48,marginBottom:4}}>{"🏆"}</div>
+                <div style={{fontFamily:"'Noto Serif JP',serif",fontSize:28,fontWeight:900,letterSpacing:3}}>GAME OVER</div>
+                <div style={{fontSize:14,color:"#8a7a6a",marginTop:4}}>{"Winner: "+PSYM[winner.i]+" with $"+winner.sc}</div>
+              </div>
+              <div style={{marginBottom:16}}>
+                {ranked.map(function(item,rank){
+                  var isCW=item.i===codWinner3&&maxCod3>0;
+                  return <div key={item.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",marginBottom:4,borderRadius:6,background:rank===0?"#2a2a2a":"#e8dcc8",color:rank===0?"#fff":"#1a1a1a",border:rank===0?"none":"1px solid #d4c9b5"}}>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <span style={{fontSize:16,fontWeight:700,color:rank===0?"#E8A838":"#8a7a6a"}}>{"#"+(rank+1)}</span>
+                      <span style={{fontSize:22}}>{PSYM[item.i]}</span>
+                    </div>
+                    <div style={{textAlign:"right"}}>
+                      <div style={{fontSize:22,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</div>
+                      {isCW&&<div style={{fontSize:9,color:"#E8A838"}}>{"incl $"+blackCodBonus+" cod bonus ("+maxCod3+" cod)"}</div>}
+                    </div>
+                  </div>;
+                })}
+              </div>
+              {maxCod3>0&&<div style={{padding:8,background:"#2a2a2a",borderRadius:6,color:"#fff",marginBottom:12}}>
+                <div style={{display:"flex",alignItems:"center",gap:6}}>
+                  <img src={FISH_IMG[5]} width={20} height={20} style={{borderRadius:3}}/>
+                  <span style={{fontSize:12,fontWeight:700}}>Black Cod Bonus</span>
+                  <span style={{fontSize:14,fontWeight:900,color:"#E8A838",marginLeft:"auto"}}>{"$"+blackCodBonus}</span>
+                </div>
+                <div style={{fontSize:10,marginTop:4}}>{PSYM[codWinner3]+" wins with "+maxCod3+" cod"}</div>
+              </div>}
+              <button onClick={function(){setPhase("setup");}} style={{width:"100%",marginTop:8,padding:"12px",borderRadius:6,background:"#2a2a2a",border:"none",color:"#fff",fontSize:14,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>NEW GAME</button>
+            </div>
+          </div>;
+        })()}
         <div onWheel={handleW} onPointerDown={handlePD} onPointerMove={handlePM} onPointerUp={handlePU} onPointerLeave={handlePU} onContextMenu={function(e){e.preventDefault();}}
           style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",cursor:isP?"grabbing":"default",position:"relative",background:"#f0e6d3"}}>
           <div style={{position:"absolute",bottom:12,left:12,display:"flex",gap:4,zIndex:5}}>
