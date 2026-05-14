@@ -1,32 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FISH</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    var { useState, useEffect, useCallback, useRef, useMemo } = React;
-    if (typeof window.storage === 'undefined') {
-      window.storage = {
-        get: async function(key) { try { var val = localStorage.getItem('fish_' + key); return val ? { key: key, value: val } : null; } catch(e) { return null; } },
-        set: async function(key, value) { try { localStorage.setItem('fish_' + key, value); return { key: key, value: value }; } catch(e) { return null; } },
-        delete: async function(key) { try { localStorage.removeItem('fish_' + key); return { key: key, deleted: true }; } catch(e) { return null; } },
-        list: async function(prefix) { var keys = []; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', '')); } } catch(e) {} return { keys: keys }; }
-      };
-    }
-
-
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 var R=280, W=Math.sqrt(3)*R, MID_R=140;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -491,7 +463,7 @@ function PlayerAnim(props){
   return null;
 }
 
-function FishGame(){
+export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
   var [blackCodBonus,setBlackCodBonus]=useState(500);
@@ -1425,14 +1397,3 @@ function FishGame(){
     </div>
   );
 }
-
-
-    try {
-      var root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(FishGame));
-    } catch(e) {
-      document.getElementById('root').innerHTML = '<pre style="padding:20px;color:red;">Error: ' + e.message + '\n' + e.stack + '</pre>';
-    }
-  </script>
-</body>
-</html>
