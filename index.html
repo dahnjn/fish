@@ -411,10 +411,12 @@ function bfsDistance(startId, targetId, adjList) {
   }
   return -1; // unreachable
 }
-function calcScores(cd,cn,np){
+function calcScores(cd,cn,np,pls,codBonus){
   var sc=[];for(var k=0;k<np;k++)sc.push(0);
   cn.forEach(function(cid){var c=cd[cid]||{};for(var ft=0;ft<5;ft++){var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
-    if(tot>0)Object.entries(del).forEach(function(e){sc[Number(e[0])]+=Math.round(100*e[1]/tot);});}});return sc;
+    if(tot>0)Object.entries(del).forEach(function(e){sc[Number(e[0])]+=Math.round(100*e[1]/tot);});}});
+  if(pls&&codBonus){var maxC=0,maxP=-1;pls.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxC){maxC=pc;maxP=i;}});if(maxP>=0&&maxC>0)sc[maxP]+=codBonus;}
+  return sc;
 }
 
 function PlayerAnim(props){
@@ -1464,4 +1466,3 @@ function FishGame(){
   </script>
 </body>
 </html>
-
