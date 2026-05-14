@@ -11,6 +11,13 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body, #root { height: 100%; width: 100%; overflow: hidden; }
+    @keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+    @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}}
+    @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}}
+    @keyframes pirateShake{0%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}100%{transform:rotate(0)}}
+    @keyframes eventFadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+    @keyframes eventBounce{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
+    @keyframes fishTransfer{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(100px) translateY(-15px);opacity:1}90%{opacity:0.8}100%{transform:translateX(180px);opacity:0}}
   </style>
 </head>
 <body>
@@ -1049,10 +1056,7 @@ function FishGame(){
   var scores=phase==="gameover"?fs:liveScores;
 
   return (
-    <div style={{fontFamily:"'Noto Sans JP','Segoe UI',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
-      <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700&display=swap" rel="stylesheet"/>
-      <style dangerouslySetInnerHTML={{__html:"@keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}} @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}} @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}} @keyframes pirateShake{0%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}100%{transform:rotate(0)}} @keyframes eventFadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}} @keyframes eventBounce{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}} @keyframes fishTransfer{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(100px) translateY(-15px);opacity:1}90%{opacity:0.8}100%{transform:translateX(180px);opacity:0}}"}} />
-
+    <div style={{fontFamily:"'Noto Sans JP',sans-serif",background:"#f0e6d3",color:"#2a2a2a",minHeight:"100vh",display:"flex",flexDirection:"column"}}>
       <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"6px 16px",borderBottom:"1px solid #c8b99a",background:"#e8dcc8",flexShrink:0,zIndex:10}}>
         <span style={{fontFamily:"'Noto Serif JP'",fontWeight:700,fontSize:18,letterSpacing:2}}>FISH</span>
         <span style={{fontSize:11,color:"#999"}}>{"Round "+cr+"/"+numRounds}</span>
@@ -1063,81 +1067,8 @@ function FishGame(){
             </div>;})}
         </div>
       </div>
-
       <div style={{display:"flex",flex:1,overflow:"hidden",position:"relative"}}>
         {eventEl}
-        {phase==="gameover"&&(function(){
-          var finalScores=fs||liveScores;
-          var ranked=finalScores.map(function(sc,i){return{sc:sc,i:i};}).sort(function(a,b){return b.sc-a.sc;});
-          var winner=ranked[0];
-          var maxCod=0,codWinner=-1;
-          players.forEach(function(pl,i){var pc=pl.blackCod||0;if(pc>maxCod){maxCod=pc;codWinner=i;}});
-          return <div style={{position:"absolute",top:0,left:0,right:0,bottom:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.7)",zIndex:30}}>
-            <div style={{background:"#f0e6d3",borderRadius:16,padding:"32px 40px",maxWidth:420,width:"90%",maxHeight:"85vh",overflow:"auto",boxShadow:"0 16px 64px rgba(0,0,0,0.4)"}}>
-              <div style={{textAlign:"center",marginBottom:16}}>
-                <div style={{fontSize:48,marginBottom:4}}>🏆</div>
-                <div style={{fontFamily:"'Noto Serif JP',serif",fontSize:28,fontWeight:900,letterSpacing:3}}>GAME OVER</div>
-                <div style={{fontSize:14,color:"#8a7a6a",marginTop:4}}>{"Winner: "+PSYM[winner.i]+" with $"+winner.sc}</div>
-              </div>
-              <div style={{marginBottom:16}}>
-                {ranked.map(function(item,rank){
-                  var isCodWinner=item.i===codWinner&&maxCod>0;
-                  var fishEarn=item.sc-(isCodWinner?blackCodBonus:0);
-                  return <div key={item.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"10px 12px",marginBottom:4,borderRadius:6,background:rank===0?"#2a2a2a":"#e8dcc8",color:rank===0?"#fff":"#1a1a1a",border:rank===0?"none":"1px solid #d4c9b5"}}>
-                    <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <span style={{fontSize:16,fontWeight:700,color:rank===0?"#E8A838":"#8a7a6a"}}>{"#"+(rank+1)}</span>
-                      <span style={{fontSize:22}}>{PSYM[item.i]}</span>
-                    </div>
-                    <div style={{textAlign:"right"}}>
-                      <div style={{fontSize:22,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+item.sc}</div>
-                      {isCodWinner&&<div style={{fontSize:9,color:rank===0?"#E8A838":"#E8A838"}}>{"incl $"+blackCodBonus+" cod bonus ("+maxCod+" cod)"}</div>}
-                    </div>
-                  </div>;
-                })}
-              </div>
-              <div style={{fontSize:10,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>City Earnings</div>
-              {cn.map(function(cid,ci){
-                var c=cd[cid]||{};var accepted=CITY_ACCEPTS[ci]||[];var hasData=false;
-                var rows=[];
-                accepted.forEach(function(ft){
-                  if(ft===5)return;
-                  var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
-                  if(tot>0){hasData=true;
-                    var pEntries=[];
-                    Object.entries(del).forEach(function(e){pEntries.push({pid:Number(e[0]),cnt:e[1],earned:Math.round(100*e[1]/tot)});});
-                    rows.push({ft:ft,tot:tot,entries:pEntries});
-                  }
-                });
-                if(!hasData)return null;
-                return <div key={ci} style={{marginBottom:6,padding:8,background:"#fff",borderRadius:6,border:"1px solid #e8dcc8"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                    <div style={{width:12,height:12,borderRadius:"50%",background:(ci===3||ci===4)?"linear-gradient(135deg,#D64045,#E8A838,#1B9E77,#3A86C8,#8B5FBF)":(CITY_COLORS[ci]||"#1a1a1a"),border:"1px solid #ccc"}}/>
-                    <span style={{fontSize:12,fontWeight:700}}>{CFULL[ci]}</span>
-                  </div>
-                  {rows.map(function(r){return <div key={r.ft} style={{marginBottom:3,marginLeft:18}}>
-                    <div style={{display:"flex",alignItems:"center",gap:4}}>
-                      <img src={FISH_IMG[r.ft]} width={20} height={20} style={{borderRadius:3}}/>
-                      <span style={{fontSize:10,fontWeight:600}}>{FISH[r.ft].name}</span>
-                      <span style={{fontSize:9,color:"#8a7a6a"}}>{"("+r.tot+" sold)"}</span>
-                    </div>
-                    <div style={{display:"flex",gap:6,marginLeft:24,marginTop:1}}>
-                      {r.entries.map(function(e2){return <span key={e2.pid} style={{fontSize:9}}>{PSYM[e2.pid]+" "+e2.cnt+"×$"+Math.round(100/r.tot)+"=$"+e2.earned}</span>;})}
-                    </div>
-                  </div>;})}
-                </div>;
-              })}
-              {maxCod>0&&<div style={{marginTop:8,padding:8,background:"#2a2a2a",borderRadius:6,color:"#fff"}}>
-                <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                  <img src={FISH_IMG[5]} width={20} height={20} style={{borderRadius:3}}/>
-                  <span style={{fontSize:12,fontWeight:700}}>Black Cod Bonus</span>
-                  <span style={{fontSize:14,fontWeight:900,color:"#E8A838",marginLeft:"auto"}}>{"$"+blackCodBonus}</span>
-                </div>
-                <div style={{fontSize:10}}>{PSYM[codWinner]+" wins with "+maxCod+" cod"}</div>
-              </div>}
-              <button onClick={function(){setPhase("setup");}} style={{width:"100%",marginTop:16,padding:"12px",borderRadius:6,background:"#2a2a2a",border:"none",color:"#fff",fontSize:14,cursor:"pointer",fontFamily:"'Noto Serif JP',serif",fontWeight:700,letterSpacing:2}}>NEW GAME</button>
-            </div>
-          </div>;
-        })()}
         <div onWheel={handleW} onPointerDown={handlePD} onPointerMove={handlePM} onPointerUp={handlePU} onPointerLeave={handlePU} onContextMenu={function(e){e.preventDefault();}}
           style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",overflow:"hidden",cursor:isP?"grabbing":"default",position:"relative",background:"#f0e6d3"}}>
           <div style={{position:"absolute",bottom:12,left:12,display:"flex",gap:4,zIndex:5}}>
@@ -1146,7 +1077,6 @@ function FishGame(){
             <button onClick={function(){setZoom(1);setPan({x:0,y:0});}} style={{height:28,borderRadius:4,border:"1px solid #c8b99a",padding:"0 6px",background:"#e8dcc8",fontSize:9,cursor:"pointer",color:"#333"}}>FIT</button>
             <button onClick={function(){if(players[cp]&&players[cp].position!==null){var nd=nodes[players[cp].position];var svgCx=vbx+vbw/2;var svgCy=vby+vbh/2;setPan({x:-(nd.x-svgCx)*zoom,y:-(nd.y-svgCy)*zoom});setZoom(function(z){return Math.max(z,1.5);});}}} style={{height:28,borderRadius:4,border:"1px solid #D64045",padding:"0 6px",background:"#D64045",fontSize:9,cursor:"pointer",color:"#fff",fontWeight:700}}>FIND</button>
           </div>
-
           <svg viewBox={vbx+" "+vby+" "+vbw+" "+vbh} style={{maxWidth:"100%",maxHeight:"calc(100vh - 46px)",transform:"scale("+zoom+") translate("+(pan.x/zoom)+"px,"+(pan.y/zoom)+"px)",transformOrigin:"center center"}}>
             <defs>
               <linearGradient id="rainbowGrad" x1="0" y1="0" x2="1" y2="1">
@@ -1158,82 +1088,22 @@ function FishGame(){
                 <stop offset="100%" stopColor="#8B5FBF"/>
               </linearGradient>
             </defs>
-
             {HC.map(function(hc,i){var pts=[];for(var j=0;j<6;j++){var v=hv(hc[0],hc[1],R,j);pts.push(v[0]+","+v[1]);}
-              return <polygon key={"h"+i} points={pts.join(" ")} fill="none" stroke="#c8b99a" strokeWidth={0.4}/>;
-            })}
-            {/* Diamond outlines with level numbers */}
-            {(function(){
-              var bcx=W,bcy=1.5*R,dr=100;
-              var dps=[[bcx,-(R+dr*4.5)],[bcx,3*R+R+dr*4.5],[-(R*0.6+dr*4.5),1.5*R],[2*W+R*0.6+dr*4.5,1.5*R]];
-              return dps.map(function(dp,i){
-                var cx=dp[0],cy=dp[1];
-                var pts=cx+","+(cy-dr)+" "+(cx+dr)+","+cy+" "+cx+","+(cy+dr)+" "+(cx-dr)+","+cy;
-                var lvl=diamondLevels[i]||1;
-                return <g key={"dm"+i}>
-                  <polygon points={pts} fill="none" stroke="#8a7a6a" strokeWidth={0.6}/>
-                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#1a1a1a" fontSize={28} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text>
-                </g>;
-              });
-            })()}
+              return <polygon key={"h"+i} points={pts.join(" ")} fill="none" stroke="#c8b99a" strokeWidth={0.4}/>;})}
             {HC.map(function(hc,i){return <circle key={"c"+i} cx={hc[0]} cy={hc[1]} r={MID_R} fill="none" stroke="#d4c9b5" strokeWidth={0.3}/>;})}
+            {(function(){var bcx2=W,bcy2=1.5*R,dr2=100;var dps=[[bcx2,-(R+dr2*4.5)],[bcx2,3*R+R+dr2*4.5],[-(R*0.6+dr2*4.5),1.5*R],[2*W+R*0.6+dr2*4.5,1.5*R]];return dps.map(function(dp,i){var cx=dp[0],cy=dp[1];var pts=cx+","+(cy-dr2)+" "+(cx+dr2)+","+cy+" "+cx+","+(cy+dr2)+" "+(cx-dr2)+","+cy;var lvl=diamondLevels[i]||1;return <g key={"dm"+i}><polygon points={pts} fill="none" stroke="#8a7a6a" strokeWidth={0.6}/><text x={cx} y={cy} textAnchor="middle" dominantBaseline="central" fill="#1a1a1a" fontSize={28} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"x"+lvl}</text></g>;});})()}
             {el.map(function(pair,i){var a=pair[0],b=pair[1];if(occupiedCities[a]||occupiedCities[b])return <line key={i} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} stroke="#5a4a3a" strokeWidth={0.8} opacity={0.1}/>;return <line key={i} x1={nodes[a].x} y1={nodes[a].y} x2={nodes[b].x} y2={nodes[b].y} stroke="#5a4a3a" strokeWidth={0.8}/>;})}
-
-            {cityLabelPos.map(function(lp,i){return <g key={"clo"+i}>
-              <text x={lp.x} y={lp.y-5} textAnchor="middle" fill="#1a1a1a" fontSize={18} fontFamily="'Noto Serif JP',serif" fontWeight={900}>{CFULL[i]}</text>
-              <text x={lp.x} y={lp.y+11} textAnchor="middle" fill="#5a4a3a" fontSize={11} fontFamily="'Noto Serif JP',serif">{CJP[i]}</text>
-            </g>;})}
-
+            {cityLabelPos.map(function(lp,i){return <g key={"clo"+i}><text x={lp.x} y={lp.y-5} textAnchor="middle" fill="#1a1a1a" fontSize={18} fontFamily="'Noto Serif JP',serif" fontWeight={900}>{CFULL[i]}</text><text x={lp.x} y={lp.y+11} textAnchor="middle" fill="#5a4a3a" fontSize={11} fontFamily="'Noto Serif JP',serif">{CJP[i]}</text></g>;})}
             {sp.length>1&&sp.map(function(nId,i){if(i===0)return null;var pv=nodes[sp[i-1]],cu=nodes[nId];return <line key={"p"+i} x1={pv.x} y1={pv.y} x2={cu.x} y2={cu.y} stroke="#1a1a1a" strokeWidth={1.5} strokeOpacity={0.4}/>;})}
-
-            {curNode!==null&&rn.map(function(nId){var from=nodes[curNode],to=nodes[nId];
-              return <g key={"rd"+nId} style={{cursor:"pointer"}} onClick={function(){moveN(nId);}}>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="transparent" strokeWidth={14}/>
-                <line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#1a1a1a" strokeWidth={1} strokeDasharray="2,2" opacity={0.5}/>
-              </g>;})}
-
-            {nodes.map(function(node){
-              var ft=fm[node.id];var hasFish=ft!==null&&ft!==undefined;
-              var isCity=node.type==="city";var isStart=node.type==="start";
-              var cityR=14;
-              if(isCity){
-                var ci=cn.indexOf(node.id);
-                if(ci>=0){
-                  var avgPrice=0;
-                  for(var fi2=0;fi2<5;fi2++){avgPrice+=(prices[node.id]&&prices[node.id][fi2]!==undefined?prices[node.id][fi2]:100);}
-                  avgPrice=avgPrice/5;
-                  cityR=Math.max(14, 14 + (avgPrice - 20) * 0.5);
-                  if(cityR>56) cityR=56;
-                }
-              }
-              var clickable=(tp==="move"&&rn.indexOf(node.id)>=0);
-              return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
+            {curNode!==null&&rn.map(function(nId){var from=nodes[curNode],to=nodes[nId];return <g key={"rd"+nId} style={{cursor:"pointer"}} onClick={function(){moveN(nId);}}><line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="transparent" strokeWidth={14}/><line x1={from.x} y1={from.y} x2={to.x} y2={to.y} stroke="#1a1a1a" strokeWidth={1} strokeDasharray="2,2" opacity={0.5}/></g>;})}
+            {cn.map(function(nId,ci){var accepts=CITY_ACCEPTS[ci]||[];if(accepts.indexOf(5)>=0&&accepts.length===1)return null;var nd2=nodes[nId];var avgP=0;for(var fi3=0;fi3<5;fi3++){avgP+=(prices[nId]&&prices[nId][fi3]!==undefined?prices[nId][fi3]:100);}avgP=avgP/5;var cR=Math.min(56,Math.max(14,14+(avgP-20)*0.5));if(accepts.length===1){var ft2=accepts[0];var pr2=prices[nId]&&prices[nId][ft2]!==undefined?prices[nId][ft2]:100;return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[ft2].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr2}</text>;}else{var cycFt=accepts[priceIdx%accepts.length];var pr3=prices[nId]&&prices[nId][cycFt]!==undefined?prices[nId][cycFt]:100;return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[cycFt].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr3}</text>;}})}
+            {nodes.map(function(node){var ft=fm[node.id];var hasFish=ft!==null&&ft!==undefined;var isCity=node.type==="city";var isStart=node.type==="start";var clickable=(tp==="move"&&rn.indexOf(node.id)>=0);var cityR=14;if(isCity){var ci2=cn.indexOf(node.id);if(ci2>=0){var avgP2=0;for(var fi4=0;fi4<5;fi4++){avgP2+=(prices[node.id]&&prices[node.id][fi4]!==undefined?prices[node.id][fi4]:100);}avgP2=avgP2/5;cityR=Math.min(56,Math.max(14,14+(avgP2-20)*0.5));}}return <g key={node.id} style={{cursor:clickable?"pointer":"default"}} onClick={function(){if(clickable)moveN(node.id);}}>
                 {clickable&&<circle cx={node.x} cy={node.y} r={NR+8} fill="transparent" stroke="none"/>}
                 {isCity?<React.Fragment><circle cx={node.x} cy={node.y} r={cityR} fill={CITY_COLORS[cn.indexOf(node.id)]||"#1a1a1a"} stroke={occupiedCities[node.id]?"#fff":"#1a1a1a"} strokeWidth={occupiedCities[node.id]?3:1}/><text x={node.x} y={node.y+cityR*0.35} textAnchor="middle" fill="#fff" fontSize={Math.max(8,cityR*0.7)} fontWeight="700" fontFamily="'Noto Serif JP',serif" fontStyle="italic">{CITIES[cn.indexOf(node.id)]}</text>{occupiedCities[node.id]&&<React.Fragment><line x1={node.x-cityR*0.5} y1={node.y-cityR*0.5} x2={node.x+cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/><line x1={node.x+cityR*0.5} y1={node.y-cityR*0.5} x2={node.x-cityR*0.5} y2={node.y+cityR*0.5} stroke="#fff" strokeWidth={2.5} opacity={0.8}/></React.Fragment>}</React.Fragment>
                 :isStart?(hasFish?<circle cx={node.x} cy={node.y} r={NR} fill={ft===5?"#3a3a3a":FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>:<circle cx={node.x} cy={node.y} r={NR+2} fill="none" stroke="#1a1a1a" strokeWidth={2.5}/>)
                 :hasFish?<circle cx={node.x} cy={node.y} r={node.type==="diamond"?NR+2:NR} fill={ft===5?"#3a3a3a":""+FISH[ft].color} stroke={ft===5?"#E8A838":"#fff"} strokeWidth={ft===5?2:0.5}/>
                 :<circle cx={node.x} cy={node.y} r={NR} fill="none" stroke="#1a1a1a" strokeWidth={1.5}/>}
-              </g>;
-            })}
-
-            {/* City price displays */}
-            {cn.map(function(nId,ci){
-              var accepts=CITY_ACCEPTS[ci]||[];
-              if(accepts.indexOf(5)>=0&&accepts.length===1)return null; // Cod-only cities: no price
-              var nd2=nodes[nId];
-              var avgP=0;for(var fi3=0;fi3<5;fi3++){avgP+=(prices[nId]&&prices[nId][fi3]!==undefined?prices[nId][fi3]:100);}avgP=avgP/5;
-              var cR=Math.min(56,Math.max(14,14+(avgP-20)*0.5));
-              if(accepts.length===1){
-                var ft2=accepts[0];
-                var pr2=prices[nId]&&prices[nId][ft2]!==undefined?prices[nId][ft2]:100;
-                return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[ft2].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr2}</text>;
-              }else{
-                var cycFt=accepts[priceIdx%accepts.length];
-                var pr3=prices[nId]&&prices[nId][cycFt]!==undefined?prices[nId][cycFt]:100;
-                return <text key={"pr"+ci} x={nd2.x} y={nd2.y-cR-8} textAnchor="middle" fill={FISH[cycFt].color} fontSize={34} fontWeight={900} fontFamily="'Noto Serif JP',serif">{"$"+pr3}</text>;
-              }
-            })}
-
+              </g>;})}
             {players.filter(function(p){return p.position!==null;}).map(function(p){
               var nd=nodes[p.position];
               var isActive=p.id===cp&&phase==="playing";
@@ -1241,37 +1111,22 @@ function FishGame(){
                 <PlayerAnim x={nd.x} y={nd.y} pid={p.id} active={isActive}/>
                 {isActive&&tp==="move"&&ml>0&&<text x={nd.x} y={nd.y-32} textAnchor="middle" fill="#1a1a1a" fontSize={24} fontWeight={900} fontFamily="'Noto Serif JP',serif">{ml}</text>}
                 {isActive&&tp==="roll"&&<g>
-                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}>
-                    <animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite"/>
-                  </circle>
-                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}>
-                    <animate attributeName="r" values="35;55" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
-                    <animate attributeName="opacity" values="0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/>
-                  </circle>
-                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#D64045" opacity={0.9}>
-                    <animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/>
-                  </polygon>
+                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite"/></circle>
+                  <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/></circle>
+                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#D64045" opacity={0.9}><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/></polygon>
                 </g>}
-              </g>;
-            })}
+              </g>;})}
           </svg>
         </div>
-
-        <div style={{width:280,borderLeft:"1px solid #c8b99a",background:"#e8dcc8",display:"flex",flexDirection:"column",flexShrink:0}}>
-          {/* SCOREBOARD - always visible */}
+        <div style={{width:280,borderLeft:"1px solid #c8b99a",background:"#e8dcc8",display:"flex",flexDirection:"column",flexShrink:0,overflow:"auto"}}>
           <div style={{padding:12,borderBottom:"2px solid #c8b99a"}}>
             <div style={{fontSize:11,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:2,marginBottom:8,fontWeight:700}}>Scoreboard</div>
             {scores&&scores.map(function(sc,i){return{sc:sc,i:i};}).sort(function(a,b){return b.sc-a.sc;}).map(function(item,rank){
-              var isActive=item.i===cp;
-              var pi=item.i;
-              var hasCodBonus=false;
-              var codBonusAmt=0;
-              // Check if this player has the cod bonus
-              var maxCodP=-1,maxCodV=0;
-              players.forEach(function(pl,idx){var pc=pl.blackCod||0;if(pc>maxCodV){maxCodV=pc;maxCodP=idx;}});
-              if(maxCodP===pi&&maxCodV>0){hasCodBonus=true;codBonusAmt=blackCodBonus;}
-              var fishEarnings=item.sc-(hasCodBonus?codBonusAmt:0);
+              var isActive=item.i===cp;var pi=item.i;
+              var hasCodBonus=false;var codBonusAmt=0;
+              var maxCodP2=-1,maxCodV2=0;
+              players.forEach(function(pl,idx){var pc=pl.blackCod||0;if(pc>maxCodV2){maxCodV2=pc;maxCodP2=idx;}});
+              if(maxCodP2===pi&&maxCodV2>0){hasCodBonus=true;codBonusAmt=blackCodBonus;}
               var isExpanded=expandedPlayer===pi||(expandedPlayer===null&&pi===cp);
               return <div key={pi}>
                 <div onClick={function(){setExpandedPlayer(isExpanded?null:pi);}} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"8px 10px",marginBottom:1,borderRadius:4,background:isActive?"#1a1a1a10":rank===0?"#f5f0e8":"transparent",border:isActive?"2px solid #1a1a1a":rank===0?"1px solid #c8b99a":"1px solid transparent",cursor:"pointer"}}>
@@ -1285,38 +1140,17 @@ function FishGame(){
                   </div>
                 </div>
                 {isExpanded&&<div style={{padding:"4px 10px 8px",marginBottom:3,background:"#f5f0e8",borderRadius:"0 0 4px 4px",border:"1px solid #d4c9b5",borderTop:"none"}}>
-                  {cn.map(function(cid,ci){
-                    var c=cd[cid]||{};var accepted=CITY_ACCEPTS[ci]||[];var cityEarn=0;var details=[];
-                    accepted.forEach(function(ft){
-                      if(ft===5)return;
-                      var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
-                      var myCnt=(del[pi]||0);
-                      if(myCnt>0&&tot>0){
-                        var earned=Math.round(100*myCnt/tot);
-                        var pricePerFish=Math.round(100/tot);
-                        cityEarn+=earned;
-                        details.push({ft:ft,cnt:myCnt,price:pricePerFish,earned:earned});
-                      }
-                    });
-                    if(details.length===0)return null;
-                    return <div key={ci} style={{marginBottom:4}}>
-                      <div style={{fontSize:10,fontWeight:700}}>{CFULL[ci]+" — $"+cityEarn}</div>
-                      {details.map(function(d){return <div key={d.ft} style={{fontSize:9,color:"#8a7a6a",marginLeft:8,display:"flex",gap:4,alignItems:"center"}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",background:FISH[d.ft].color}}/>
-                        <span>{d.cnt+" × $"+d.price+" = $"+d.earned}</span>
-                      </div>;})}
-                    </div>;
-                  })}
-                  {hasCodBonus&&<div style={{marginTop:4,fontSize:10,color:"#E8A838",fontWeight:700}}>{"Black Cod Bonus: $"+codBonusAmt+" ("+maxCodV+" cod)"}</div>}
+                  {cn.map(function(cid,ci){var c=cd[cid]||{};var accepted=CITY_ACCEPTS[ci]||[];var cityEarn=0;var details=[];accepted.forEach(function(ft){if(ft===5)return;var del=c[ft]||{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);var myCnt=(del[pi]||0);if(myCnt>0&&tot>0){var earned=Math.round(100*myCnt/tot);var pricePerFish=Math.round(100/tot);cityEarn+=earned;details.push({ft:ft,cnt:myCnt,price:pricePerFish,earned:earned});}});if(details.length===0)return null;return <div key={ci} style={{marginBottom:4}}><div style={{fontSize:10,fontWeight:700}}>{CFULL[ci]+" - $"+cityEarn}</div>{details.map(function(d){return <div key={d.ft} style={{fontSize:9,color:"#8a7a6a",marginLeft:8,display:"flex",gap:4,alignItems:"center"}}><div style={{width:6,height:6,borderRadius:"50%",background:FISH[d.ft].color}}/><span>{d.cnt+" x $"+d.price+" = $"+d.earned}</span></div>;})}</div>;})}
+                  {hasCodBonus&&<div style={{marginTop:4,fontSize:10,color:"#E8A838",fontWeight:700}}>{"Black Cod Bonus: $"+codBonusAmt+" ("+maxCodV2+" cod)"}</div>}
                 </div>}
               </div>;})}
-            
+          </div>
+          {(function(){var codCounts=players.map(function(pl,i){return{idx:i,cod:pl.blackCod||0};});codCounts.sort(function(a,b){return b.cod-a.cod;});var maxCod=codCounts[0]?codCounts[0].cod:0;return <div style={{marginTop:6,padding:"8px 10px",borderRadius:4,background:"#2a2a2a",color:"#fff",margin:8}}><div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}><span style={{fontSize:10,fontWeight:700,letterSpacing:1}}>BLACK COD BONUS</span><span style={{fontSize:16,fontWeight:900,fontFamily:"'Noto Serif JP',serif"}}>{"$"+blackCodBonus}</span></div>{maxCod===0?<div style={{fontSize:10,color:"#aaa"}}>No cod banked yet</div>:<div>{codCounts.map(function(item){var isLeader=item.cod===maxCod&&item.cod>0;return <div key={item.idx} style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:2,opacity:item.cod>0?1:0.3}}><span style={{fontSize:11,fontWeight:isLeader?700:400}}>{PSYM[item.idx]}</span><span style={{fontSize:20,fontWeight:900,color:isLeader?"#E8A838":"#888",fontFamily:"'Noto Serif JP',serif"}}>{item.cod}</span></div>;})}</div>}</div>;})()}
           {phase!=="gameover"&&(
             <div style={{padding:12,borderBottom:"1px solid #d4c9b5"}}>
               <div style={{fontSize:16,fontWeight:700,color:"#1a1a1a",fontFamily:"'Noto Serif JP'",marginBottom:8}}>{PSYM[cp]}</div>
               <div style={{display:"flex",gap:4,flexWrap:"wrap",marginBottom:10}}>
-                {FISH.map(function(ft,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:4,fontSize:13,background:ft.color+"18",border:"1px solid "+ft.color+"40"}}>
-                  <div style={{width:9,height:9,borderRadius:"50%",background:ft.color}}/><span style={{fontWeight:700,fontSize:14}}>{players[cp]?players[cp].fish[i]:0}</span></div>;})}
+                {FISH.map(function(ft,i){return <div key={i} style={{display:"flex",alignItems:"center",gap:3,padding:"3px 8px",borderRadius:4,fontSize:13,background:ft.color+"18",border:"1px solid "+ft.color+"40"}}><div style={{width:9,height:9,borderRadius:"50%",background:ft.color}}/><span style={{fontWeight:700,fontSize:14}}>{players[cp]?players[cp].fish[i]:0}</span></div>;})}
               </div>
               {tp==="roll"&&phase==="playing"&&(
                 <div>
@@ -1336,80 +1170,14 @@ function FishGame(){
                   <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={44}/>;})}</div>
                   <span style={{fontSize:18,fontWeight:900,color:"#1B9E77",fontFamily:"'Noto Serif JP',serif"}}>{"Moves: "+ml}</span></div>)}
             </div>)}
-
-          {/* PIRACY INTEL - show distance to other ships not docked at cities */}
-          {phase==="playing"&&players[cp]&&players[cp].position!==null&&(function(){
-            var curPos=players[cp].position;
-            var targets=[];
-            players.forEach(function(pl,i){
-              if(i===cp||pl.position===null)return;
-              // Skip players docked at cities
-              if(cn.indexOf(pl.position)>=0)return;
-              var totalFish=pl.fish.reduce(function(a,b){return a+b;},0);
-              if(totalFish===0)return; // no fish to steal
-              var dist=bfsDistance(curPos,pl.position,adj);
-              targets.push({name:pl.name,sym:PSYM[i],dist:dist,fish:pl.fish.slice(),totalFish:totalFish});
-            });
-            if(targets.length===0)return null;
-            targets.sort(function(a,b){return a.dist-b.dist;});
-            return <div style={{padding:8,borderBottom:"1px solid #d4c9b5",background:"#f5f0e8"}}>
-              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Nearby Ships</div>
-              {targets.map(function(t,i){
-                return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:4}}>
-                    <span style={{fontSize:12}}>{t.sym}</span>
-                    
-                  </div>
-                  <div style={{display:"flex",alignItems:"center",gap:6}}>
-                    <div style={{display:"flex",gap:2}}>
-                      {t.fish.map(function(c,fi){return c>0?<div key={fi} style={{display:"flex",alignItems:"center",gap:1}}>
-                        <div style={{width:5,height:5,borderRadius:"50%",background:FISH[fi].color}}/><span style={{fontSize:8,fontWeight:600}}>{c}</span>
-                      </div>:null;})}
-                    </div>
-                    <span style={{fontSize:11,fontWeight:900,color:t.dist<=6?"#D64045":t.dist<=12?"#E8A838":"#8a7a6a"}}>{t.dist+" moves"}</span>
-                  </div>
-                </div>;
-              })}
-            </div>;
-          })()}
-
-          {(
-            <div style={{flex:1,overflow:"auto",padding:8}}>
-              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Species Guide</div>
-              {FISH.map(function(ft,i){
-                var wild=0;
-                nodes.forEach(function(n){if(fm[n.id]===i)wild++;});
-                var caught=0;
-                players.forEach(function(p){caught+=p.fish[i];});
-                var sold=0;
-                cn.forEach(function(cid){var del=cd[cid]&&cd[cid][i]?cd[cid][i]:{};Object.values(del).forEach(function(v){sold+=v;});});
-                var total=wild+caught+sold;
-                // Dynamic rarity based on actual wild count relative to total fish on board
-                var totalWild=0;nodes.forEach(function(n){if(fm[n.id]!==null&&fm[n.id]!==undefined)totalWild++;});
-                var pct=totalWild>0?Math.round(wild/totalWild*100):0;
-                var rarityLabel=pct>=25?"Common":pct>=15?"Uncommon":pct>=8?"Scarce":pct>=3?"Rare":"Legendary";
-                return <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:6,background:"#f5f0e8",borderRadius:4,border:"1px solid #d4c9b5"}}>
-                  <img src={FISH_IMG[i]} width={40} height={40} style={{borderRadius:4,border:"2px solid "+ft.color+"60"}}/>
-                  <div style={{flex:1}}>
-                    <div style={{fontSize:12,fontWeight:700,color:"#1a1a1a"}}>{ft.name}</div>
-                    <div style={{fontSize:9,color:"#8a7a6a",marginTop:2}}>
-                      <span style={{color:ft.color,fontWeight:600}}>{"Wild: "+wild}</span>
-                      <span style={{marginLeft:6}}>{"Caught: "+caught}</span>
-                      <span style={{marginLeft:6}}>{"Sold: "+sold}</span>
-                    </div>
-                    <div style={{fontSize:8,color:"#aaa",marginTop:1}}>{rarityLabel+" ("+pct+"% of wild)"}</div>
-                  </div>
-                </div>;
-              })}
-            </div>)}
-
+          {phase==="playing"&&players[cp]&&players[cp].position!==null&&(function(){var curPos=players[cp].position;var targets=[];players.forEach(function(pl,i){if(i===cp||pl.position===null)return;if(cn.indexOf(pl.position)>=0)return;var totalFish=pl.fish.reduce(function(a,b){return a+b;},0);if(totalFish===0)return;var dist=bfsDistance(curPos,pl.position,adj);targets.push({sym:PSYM[i],dist:dist,fish:pl.fish.slice(),totalFish:totalFish});});if(targets.length===0)return null;targets.sort(function(a,b){return a.dist-b.dist;});return <div style={{padding:8,borderBottom:"1px solid #d4c9b5",background:"#f5f0e8"}}><div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Nearby Ships</div>{targets.map(function(t,i){return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}><span style={{fontSize:12}}>{t.sym}</span><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{display:"flex",gap:2}}>{t.fish.map(function(c,fi){return c>0?<div key={fi} style={{display:"flex",alignItems:"center",gap:1}}><div style={{width:5,height:5,borderRadius:"50%",background:FISH[fi].color}}/><span style={{fontSize:8,fontWeight:600}}>{c}</span></div>:null;})}</div><span style={{fontSize:11,fontWeight:900,color:t.dist<=6?"#D64045":t.dist<=12?"#E8A838":"#8a7a6a"}}>{t.dist+" moves"}</span></div></div>;})}</div>;})()}
+          <div style={{flex:1,overflow:"auto",padding:8}}>
+            <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Species Guide</div>
+            {FISH.map(function(ft,i){var wild=0;nodes.forEach(function(n){if(fm[n.id]===i)wild++;});var caught=0;players.forEach(function(p){caught+=p.fish[i];});var sold=0;cn.forEach(function(cid){var del=cd[cid]&&cd[cid][i]?cd[cid][i]:{};Object.values(del).forEach(function(v){sold+=v;});});var totalWild=0;nodes.forEach(function(n){if(fm[n.id]!==null&&fm[n.id]!==undefined)totalWild++;});var pct=totalWild>0?Math.round(wild/totalWild*100):0;var rarityLabel=pct>=25?"Common":pct>=15?"Uncommon":pct>=8?"Scarce":pct>=3?"Rare":"Legendary";return <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:6,background:"#f5f0e8",borderRadius:4,border:"1px solid #d4c9b5"}}><img src={FISH_IMG[i]} width={40} height={40} style={{borderRadius:4,border:"2px solid "+ft.color+"60"}}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:"#1a1a1a"}}>{ft.name}</div><div style={{fontSize:9,color:"#8a7a6a",marginTop:2}}><span style={{color:ft.color,fontWeight:600}}>{"Wild: "+wild}</span><span style={{marginLeft:6}}>{"Caught: "+caught}</span><span style={{marginLeft:6}}>{"Sold: "+sold}</span></div><div style={{fontSize:8,color:"#aaa",marginTop:1}}>{rarityLabel+" ("+pct+"% of wild)"}</div></div></div>;})}
+          </div>
           <div style={{padding:8,borderTop:"1px solid #d4c9b5"}}>
             <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-              {FISH.map(function(ft,i){
-                var w=0;nodes.forEach(function(n){if(fm[n.id]===i)w++;});
-                return <div key={i} style={{display:"flex",alignItems:"center",gap:3}}>
-                  <div style={{width:8,height:8,borderRadius:"50%",background:ft.color}}/><span style={{fontSize:9}}>{ft.short}</span>
-                  <span style={{fontSize:8,color:"#8a7a6a"}}>{w}</span></div>;})}
+              {FISH.map(function(ft,i){var w=0;nodes.forEach(function(n){if(fm[n.id]===i)w++;});return <div key={i} style={{display:"flex",alignItems:"center",gap:3}}><div style={{width:8,height:8,borderRadius:"50%",background:ft.color}}/><span style={{fontSize:9}}>{ft.short}</span><span style={{fontSize:8,color:"#8a7a6a"}}>{w}</span></div>;})}
             </div>
           </div>
           <div style={{padding:8,borderTop:"1px solid #d4c9b5"}}>
