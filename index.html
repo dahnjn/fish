@@ -1111,7 +1111,7 @@ function FishGame(){
                 if(!hasData)return null;
                 return <div key={ci} style={{marginBottom:6,padding:8,background:"#fff",borderRadius:6,border:"1px solid #e8dcc8"}}>
                   <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:4}}>
-                    <div style={{width:12,height:12,borderRadius:"50%",background:CITY_COLORS[ci]||"#1a1a1a",border:"1px solid #ccc"}}/>
+                    <div style={{width:12,height:12,borderRadius:"50%",background:(ci===3||ci===4)?"linear-gradient(135deg,#D64045,#E8A838,#1B9E77,#3A86C8,#8B5FBF)":(CITY_COLORS[ci]||"#1a1a1a"),border:"1px solid #ccc"}}/>
                     <span style={{fontSize:12,fontWeight:700}}>{CFULL[ci]}</span>
                   </div>
                   {rows.map(function(r){return <div key={r.ft} style={{marginBottom:3,marginLeft:18}}>
@@ -1373,37 +1373,7 @@ function FishGame(){
             </div>;
           })()}
 
-<div style={{display:"flex",borderBottom:"1px solid #d4c9b5"}}>
-            {["fish"].map(function(t){return <button key={t} onClick={function(){setSideTab(t);}} style={{flex:1,padding:"6px",fontSize:9,fontWeight:sideTab===t?700:400,background:sideTab===t?"#f0e6d3":"transparent",border:"none",borderBottom:sideTab===t?"2px solid #1a1a1a":"2px solid transparent",cursor:"pointer",textTransform:"uppercase",letterSpacing:1,color:"#1a1a1a"}}>{t}</button>;})}
-          </div>
-
-          {sideTab==="score"&&(
-            <div style={{flex:1,overflow:"auto",padding:8}}>
-              <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Live Standings</div>
-              {scores&&scores.map(function(sc,i){return{sc:sc,i:i};}).sort(function(a,b){return b.sc-a.sc;}).map(function(item,rank){
-                return <div key={item.i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"5px 8px",marginBottom:2,borderRadius:3,background:rank===0?"#1a1a1a08":"transparent",border:rank===0?"1px solid #1a1a1a20":"1px solid transparent"}}>
-                  <div style={{display:"flex",alignItems:"center",gap:5}}>
-                    <span style={{fontSize:10,color:"#aaa"}}>{"#"+(rank+1)}</span><span style={{fontSize:11}}>{PSYM[item.i]}</span><span style={{fontSize:11}}>{players[item.i]?players[item.i].name:""}</span></div>
-                  <span style={{fontSize:14,fontWeight:700}}>{"$"+item.sc}</span></div>;})}
-              {phase==="gameover"&&<div style={{textAlign:"center",marginTop:16,fontFamily:"'Noto Serif JP'",fontSize:16,fontWeight:700,letterSpacing:2}}>GAME OVER</div>}
-            </div>)}
-
-          {sideTab==="market"&&(
-            <div style={{flex:1,overflow:"auto",padding:6}}>
-              {cn.map(function(cid,ci){
-                return <div key={ci} style={{marginBottom:6,background:"#f5f0e8",borderRadius:4,padding:6,border:"1px solid #d4c9b5"}}>
-                  <div style={{fontSize:11,fontWeight:700,fontFamily:"'Noto Serif JP'",marginBottom:4,color:"#1a1a1a"}}>{CFULL[ci]+" "}<span style={{fontWeight:400,color:"#8a7a6a"}}>{CJP[ci]}</span></div>
-                  <div style={{display:"flex",gap:2,flexWrap:"wrap"}}>
-                    {[0,1,2,3,4].map(function(fi){return{fi:fi,pr:prices[cid]&&prices[cid][fi]!==undefined?prices[cid][fi]:100};}).sort(function(a,b){return b.pr-a.pr;}).map(function(item){
-                      var fi=item.fi;var ft=FISH[fi];var pr2=item.pr;
-                      var del=cd[cid]&&cd[cid][fi]?cd[cid][fi]:{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);
-                      return <div key={fi} style={{display:"flex",alignItems:"center",gap:2,padding:"1px 4px",borderRadius:2,fontSize:9,background:ft.color+"15",border:"1px solid "+ft.color+"30",minWidth:44}}>
-                        <div style={{width:6,height:6,borderRadius:"50%",background:ft.color,flexShrink:0}}/><span style={{fontWeight:600}}>{"$"+pr2}</span>
-                        {tot>0&&<span style={{color:"#8a7a6a",fontSize:8}}>{"("+tot+")"}</span>}</div>;})}
-                  </div></div>;})}
-            </div>)}
-
-          {sideTab==="fish"&&(
+          {(
             <div style={{flex:1,overflow:"auto",padding:8}}>
               <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Species Guide</div>
               {FISH.map(function(ft,i){
