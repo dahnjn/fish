@@ -1,39 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FISH</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;600;700&family=Noto+Serif+JP:wght@400;700;900&display=swap" rel="stylesheet">
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body, #root { height: 100%; width: 100%; overflow: hidden; }
-    @keyframes spinR{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
-    @keyframes glow{0%{opacity:.2}50%{opacity:.8}100%{opacity:.2}}
-    @keyframes diceShake{0%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}100%{transform:rotate(0)}}
-    @keyframes pirateShake{0%{transform:rotate(0)}25%{transform:rotate(-15deg)}75%{transform:rotate(15deg)}100%{transform:rotate(0)}}
-    @keyframes eventFadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
-    @keyframes eventBounce{0%{transform:scale(.3)}60%{transform:scale(1.15)}100%{transform:scale(1)}}
-    @keyframes fishTransfer{0%{transform:translateX(0);opacity:0}10%{opacity:1}50%{transform:translateX(100px) translateY(-15px);opacity:1}90%{opacity:0.8}100%{transform:translateX(180px);opacity:0}}
-  </style>
-</head>
-<body>
-  <div id="root"></div>
-  <script type="text/babel">
-    var { useState, useEffect, useCallback, useRef, useMemo } = React;
-    if (typeof window.storage === 'undefined') {
-      window.storage = {
-        get: async function(key) { try { var val = localStorage.getItem('fish_' + key); return val ? { key: key, value: val } : null; } catch(e) { return null; } },
-        set: async function(key, value) { try { localStorage.setItem('fish_' + key, value); return { key: key, value: value }; } catch(e) { return null; } },
-        delete: async function(key) { try { localStorage.removeItem('fish_' + key); return { key: key, deleted: true }; } catch(e) { return null; } },
-        list: async function(prefix) { var keys = []; try { for (var i = 0; i < localStorage.length; i++) { var k = localStorage.key(i); if (k.startsWith('fish_' + (prefix || ''))) keys.push(k.replace('fish_', '')); } } catch(e) {} return { keys: keys }; }
-      };
-    }
-
-
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 
 var R=280, W=Math.sqrt(3)*R, MID_R=140;
 var HC=[[0,0],[W,0],[2*W,0],[W/2,1.5*R],[W+W/2,1.5*R],[0,3*R],[W,3*R],[2*W,3*R]];
@@ -60,7 +25,8 @@ var MAP_PRESETS = {
   ladder: {name:"Ladder", desc:"Rarity scales 1x to 5x. Common fish everywhere, rare fish almost nowhere.", icon:"📊"},
   threeKings: {name:"Three Sisters", desc:"Only one of three rare species exists. The other two fill the seas in clusters.", icon:"👑"},
   monoculture: {name:"Monoculture", desc:"The entire ocean is filled with a single species. Pure market strategy.", icon:"🐟"},
-  cod: {name:"Cod", desc:"Black Cod in diamonds + interior hexes. Each outer hex has one species only.", icon:"🖤"}
+  cod: {name:"Cod", desc:"Black Cod in diamonds + interior hexes. Each outer hex has one species only.", icon:"🖤"},
+  championship: {name:"Championship", desc:"Every fish is in the wrong city. Black Cod floods the rainbow ports. Chaos.", icon:"🏆"}
 };
 
 function populateMap(mapType, nodes, sn, diamondNodeIds) {
@@ -114,6 +80,21 @@ function populateMap(mapType, nodes, sn, diamondNodeIds) {
       if(n.type!=="small"||kingSet[n.id])return;
       var bias=n.hi%2===0?commons[0]:commons[1];
       nf[n.id]=Math.random()<0.75?bias:commons[Math.floor(Math.random()*2)];
+    });
+  } else if (mapType === "championship") {
+    // Green fish in red city hex, red in green, yellow in blue, blue in yellow
+    // Black cod in rainbow hexes, mixed+cod in black hexes
+    var champMap = {0:2, 7:0, 2:3, 5:1, 3:5, 4:5};
+    nodes.forEach(function(n) {
+      if (n.type !== "small") return;
+      if (champMap[n.hi] !== undefined) {
+        nf[n.id] = champMap[n.hi];
+      } else if (n.hi === 1 || n.hi === 6) {
+        // Kobe and Niit: mixed fish including some black cod
+        var r2 = Math.random();
+        if (r2 < 0.15) nf[n.id] = 5;
+        else nf[n.id] = rndFish();
+      }
     });
   } else if (mapType === "monoculture") {
     var monoType = Math.floor(Math.random() * 5);
@@ -173,6 +154,21 @@ function repopHex(nf, hexIdx, nodes, mapType) {
     }
   } else if (mapType === "threeKings") {
     hs.forEach(function(n) { nf[n.id] = rndFish(); });
+  } else if (mapType === "championship") {
+    // Green fish in red city hex, red in green, yellow in blue, blue in yellow
+    // Black cod in rainbow hexes, mixed+cod in black hexes
+    var champMap = {0:2, 7:0, 2:3, 5:1, 3:5, 4:5};
+    nodes.forEach(function(n) {
+      if (n.type !== "small") return;
+      if (champMap[n.hi] !== undefined) {
+        nf[n.id] = champMap[n.hi];
+      } else if (n.hi === 1 || n.hi === 6) {
+        // Kobe and Niit: mixed fish including some black cod
+        var r2 = Math.random();
+        if (r2 < 0.15) nf[n.id] = 5;
+        else nf[n.id] = rndFish();
+      }
+    });
   } else if (mapType === "monoculture") {
     var counts=[0,0,0,0,0];
     nodes.forEach(function(n){if(nf[n.id]!==null&&nf[n.id]!==undefined)counts[nf[n.id]]++;});
@@ -498,7 +494,7 @@ function PlayerAnim(props){
   return null;
 }
 
-function FishGame(){
+export default function FishGame(){
   var [phase,setPhase]=useState("setup");
   var [numRounds,setNumRounds]=useState(10);
   var [blackCodBonus,setBlackCodBonus]=useState(500);
@@ -852,7 +848,28 @@ function FishGame(){
         });
         var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
         if(allEmpty){
-          hexNodes.forEach(function(n){nf[n.id]=rndFish();});
+          if(mapType==="championship"){
+            var champRepop={0:2,7:0,2:3,5:1,3:5,4:5};
+            if(champRepop[node.hi]!==undefined){
+              hexNodes.forEach(function(n){nf[n.id]=champRepop[node.hi];});
+            }else{
+              hexNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
+            }
+          }else if(mapType==="provinces"){
+            var provRepop={0:0,2:4,5:3,7:1};
+            if(provRepop[node.hi]!==undefined){hexNodes.forEach(function(n){nf[n.id]=provRepop[node.hi];});}
+            else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+          }else if(mapType==="cod"){
+            var codRepop={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
+            if(codRepop[node.hi]!==undefined){hexNodes.forEach(function(n){nf[n.id]=codRepop[node.hi];});}
+            else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+          }else if(mapType==="monoculture"){
+            var cts2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts2[nf[n2.id]]++;});
+            var dom2=0;for(var di3=1;di3<5;di3++){if(cts2[di3]>cts2[dom2])dom2=di3;}
+            hexNodes.forEach(function(n){nf[n.id]=dom2;});
+          }else{
+            hexNodes.forEach(function(n){nf[n.id]=rndFish();});
+          }
         }
       }
       // Diamond depletion: if all 8 nodes in this diamond are empty, level up and refill
@@ -1233,14 +1250,3 @@ function FishGame(){
     </div>
   );
 }
-
-
-    try {
-      var root = ReactDOM.createRoot(document.getElementById('root'));
-      root.render(React.createElement(FishGame));
-    } catch(e) {
-      document.getElementById('root').innerHTML = '<pre style="padding:20px;color:red;">Error: ' + e.message + '\n' + e.stack + '</pre>';
-    }
-  </script>
-</body>
-</html>
