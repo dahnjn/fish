@@ -122,10 +122,11 @@ function populateMap(mapType, nodes, sn, diamondNodeIds) {
     var champMap = {0:2, 7:0, 2:3, 5:1, 3:5, 4:5};
     nodes.forEach(function(n) {
       if (n.type !== "small") return;
+      // 5% chance of Purple Urchin anywhere
+      if (Math.random() < 0.05) { nf[n.id] = 4; return; }
       if (champMap[n.hi] !== undefined) {
         nf[n.id] = champMap[n.hi];
       } else if (n.hi === 1 || n.hi === 6) {
-        // Kobe and Niit: mixed fish including some black cod
         var r2 = Math.random();
         if (r2 < 0.15) nf[n.id] = 5;
         else nf[n.id] = rndFish();
@@ -195,10 +196,11 @@ function repopHex(nf, hexIdx, nodes, mapType) {
     var champMap = {0:2, 7:0, 2:3, 5:1, 3:5, 4:5};
     nodes.forEach(function(n) {
       if (n.type !== "small") return;
+      // 5% chance of Purple Urchin anywhere
+      if (Math.random() < 0.05) { nf[n.id] = 4; return; }
       if (champMap[n.hi] !== undefined) {
         nf[n.id] = champMap[n.hi];
       } else if (n.hi === 1 || n.hi === 6) {
-        // Kobe and Niit: mixed fish including some black cod
         var r2 = Math.random();
         if (r2 < 0.15) nf[n.id] = 5;
         else nf[n.id] = rndFish();
@@ -873,37 +875,45 @@ function FishGame(){
         p.fish[ft]++;
       }
       nf[nId]=null;
-      // Check hex depletion: find all fishable nodes near this hex center
+      // Check hex depletion: find which hex this node belongs to by proximity
       if(node.type==="small"||node.type==="start"){
-        var hcx2=HC[node.hi]?HC[node.hi][0]:node.x;
-        var hcy2=HC[node.hi]?HC[node.hi][1]:node.y;
-        var hexNodes=nodes.filter(function(n){
-          if(n.type!=="small"&&n.type!=="start")return false;
-          return Math.hypot(n.x-hcx2,n.y-hcy2)<=R+2;
-        });
-        var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
-        if(allEmpty){
-          if(mapType==="championship"){
-            var champRepop={0:2,7:0,2:3,5:1,3:5,4:5};
-            if(champRepop[node.hi]!==undefined){
-              hexNodes.forEach(function(n){nf[n.id]=champRepop[node.hi];});
+        // Find closest hex center to this node
+        var bestHi=-1,bestHiDist=Infinity;
+        for(var hi2=0;hi2<8;hi2++){
+          var hd=Math.hypot(node.x-HC[hi2][0],node.y-HC[hi2][1]);
+          if(hd<bestHiDist){bestHiDist=hd;bestHi=hi2;}
+        }
+        if(bestHi>=0){
+          var hcx2=HC[bestHi][0],hcy2=HC[bestHi][1];
+          var hexNodes=nodes.filter(function(n){
+            if(n.type!=="small"&&n.type!=="start")return false;
+            return Math.hypot(n.x-hcx2,n.y-hcy2)<=R+2;
+          });
+          var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
+          if(allEmpty){
+            var repopType=bestHi;
+            if(mapType==="championship"){
+              var champRepop={0:2,7:0,2:3,5:1,3:5,4:5};
+              if(champRepop[repopType]!==undefined){
+                hexNodes.forEach(function(n){if(Math.random()<0.05)nf[n.id]=4;else nf[n.id]=champRepop[repopType];});
+              }else{
+                hexNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
+              }
+            }else if(mapType==="provinces"){
+              var provRepop={0:0,2:4,5:3,7:1};
+              if(provRepop[repopType]!==undefined){hexNodes.forEach(function(n){nf[n.id]=provRepop[repopType];});}
+              else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+            }else if(mapType==="cod"){
+              var codRepop={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
+              if(codRepop[repopType]!==undefined){hexNodes.forEach(function(n){nf[n.id]=codRepop[repopType];});}
+              else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+            }else if(mapType==="monoculture"){
+              var cts2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts2[nf[n2.id]]++;});
+              var dom2=0;for(var di3=1;di3<5;di3++){if(cts2[di3]>cts2[dom2])dom2=di3;}
+              hexNodes.forEach(function(n){nf[n.id]=dom2;});
             }else{
-              hexNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
+              hexNodes.forEach(function(n){nf[n.id]=rndFish();});
             }
-          }else if(mapType==="provinces"){
-            var provRepop={0:0,2:4,5:3,7:1};
-            if(provRepop[node.hi]!==undefined){hexNodes.forEach(function(n){nf[n.id]=provRepop[node.hi];});}
-            else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
-          }else if(mapType==="cod"){
-            var codRepop={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
-            if(codRepop[node.hi]!==undefined){hexNodes.forEach(function(n){nf[n.id]=codRepop[node.hi];});}
-            else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
-          }else if(mapType==="monoculture"){
-            var cts2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts2[nf[n2.id]]++;});
-            var dom2=0;for(var di3=1;di3<5;di3++){if(cts2[di3]>cts2[dom2])dom2=di3;}
-            hexNodes.forEach(function(n){nf[n.id]=dom2;});
-          }else{
-            hexNodes.forEach(function(n){nf[n.id]=rndFish();});
           }
         }
       }
