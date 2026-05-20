@@ -472,10 +472,10 @@ function PlayerAnim(props){
   var aw=10; // arrow width
   var al=16; // arrow length
   var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <g>
-    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#1a1a1a" opacity={0.85}/>
-    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#1a1a1a" opacity={0.85}/>
-    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#1a1a1a" opacity={0.85}/>
-    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#1a1a1a" opacity={0.85}/>
+    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#888888" opacity={0.7}/>
+    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#888888" opacity={0.7}/>
+    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#888888" opacity={0.7}/>
+    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#888888" opacity={0.7}/>
   </g>;
 
   if(pid===0){
@@ -885,45 +885,50 @@ function FishGame(){
         p.fish[ft]++;
       }
       nf[nId]=null;
-      // Check hex depletion: find which hex this node belongs to by proximity
+      // Check hex depletion
       if(node.type==="small"||node.type==="start"){
-        // Find closest hex center to this node
         var bestHi=-1,bestHiDist=Infinity;
         for(var hi2=0;hi2<8;hi2++){
           var hd=Math.hypot(node.x-HC[hi2][0],node.y-HC[hi2][1]);
           if(hd<bestHiDist){bestHiDist=hd;bestHi=hi2;}
         }
         if(bestHi>=0){
-          var hcx2=HC[bestHi][0],hcy2=HC[bestHi][1];
+          // Only count nodes whose NEAREST hex is this one (avoids shared edge nodes blocking depletion)
           var hexNodes=nodes.filter(function(n){
-            if(n.type==="start")return false; // exclude start from depletion count
-            if(n.type!=="small")return false;
-            return Math.hypot(n.x-hcx2,n.y-hcy2)<=R+2;
+            if(n.type==="start"||n.type!=="small")return false;
+            var ch=-1,cd2=Infinity;
+            for(var h3=0;h3<8;h3++){var d3=Math.hypot(n.x-HC[h3][0],n.y-HC[h3][1]);if(d3<cd2){cd2=d3;ch=h3;}}
+            return ch===bestHi;
           });
           var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
-          if(allEmpty){
+          if(allEmpty&&hexNodes.length>0){
+            // Repopulate ALL nodes within R+2 (including shared edges)
+            var repopNodes=nodes.filter(function(n){
+              if(n.type!=="small")return false;
+              return Math.hypot(n.x-HC[bestHi][0],n.y-HC[bestHi][1])<=R+2;
+            });
             var repopType=bestHi;
             if(mapType==="championship"){
               var champRepop={0:2,7:0,2:3,5:1,3:5,4:5};
               if(champRepop[repopType]!==undefined){
-                hexNodes.forEach(function(n){if(Math.random()<0.05)nf[n.id]=4;else nf[n.id]=champRepop[repopType];});
+                repopNodes.forEach(function(n){if(Math.random()<0.05)nf[n.id]=4;else nf[n.id]=champRepop[repopType];});
               }else{
-                hexNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
+                repopNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
               }
             }else if(mapType==="provinces"){
               var provRepop={0:0,2:4,5:3,7:1};
-              if(provRepop[repopType]!==undefined){hexNodes.forEach(function(n){nf[n.id]=provRepop[repopType];});}
-              else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+              if(provRepop[repopType]!==undefined){repopNodes.forEach(function(n){nf[n.id]=provRepop[repopType];});}
+              else{repopNodes.forEach(function(n){nf[n.id]=rndFish();});}
             }else if(mapType==="cod"){
               var codRepop={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
-              if(codRepop[repopType]!==undefined){hexNodes.forEach(function(n){nf[n.id]=codRepop[repopType];});}
-              else{hexNodes.forEach(function(n){nf[n.id]=rndFish();});}
+              if(codRepop[repopType]!==undefined){repopNodes.forEach(function(n){nf[n.id]=codRepop[repopType];});}
+              else{repopNodes.forEach(function(n){nf[n.id]=rndFish();});}
             }else if(mapType==="monoculture"){
               var cts2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts2[nf[n2.id]]++;});
               var dom2=0;for(var di3=1;di3<5;di3++){if(cts2[di3]>cts2[dom2])dom2=di3;}
-              hexNodes.forEach(function(n){nf[n.id]=dom2;});
+              repopNodes.forEach(function(n){nf[n.id]=dom2;});
             }else{
-              hexNodes.forEach(function(n){nf[n.id]=rndFish();});
+              repopNodes.forEach(function(n){nf[n.id]=rndFish();});
             }
           }
         }
@@ -1226,7 +1231,7 @@ function FishGame(){
                 {isActive&&tp==="roll"&&<g>
                   <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite"/></circle>
                   <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/></circle>
-                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#1a1a1a" opacity={0.85}><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/></polygon>
+                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#888888" opacity={0.7}><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/></polygon>
                 </g>}
               </g>;})}
           </svg>
