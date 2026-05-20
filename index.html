@@ -431,7 +431,7 @@ function calcPrices(cd,cn){
   var p={};cn.forEach(function(cid){p[cid]={};for(var ft=0;ft<5;ft++){var del=cd[cid]&&cd[cid][ft]?cd[cid][ft]:{};var tot=Object.values(del).reduce(function(a,b){return a+b;},0);p[cid][ft]=tot>0?Math.round(100/tot):100;} p[cid][5]=0;});return p;
 }
 // BFS shortest distance from one node to another
-function bfsDistance(startId, targetId, adjList) {
+function bfsDistance(startId, targetId, adjList, citySet) {
   if (startId === targetId) return 0;
   var visited = {};
   var queue = [[startId, 0]];
@@ -445,6 +445,8 @@ function bfsDistance(startId, targetId, adjList) {
       if (nId === targetId) return dist + 1;
       if (!visited[nId]) {
         visited[nId] = true;
+        // Don't path through cities (turn ends when you enter a city)
+        if (citySet && citySet[nId]) continue;
         queue.push([nId, dist + 1]);
       }
     }
@@ -886,7 +888,8 @@ function FishGame(){
         if(bestHi>=0){
           var hcx2=HC[bestHi][0],hcy2=HC[bestHi][1];
           var hexNodes=nodes.filter(function(n){
-            if(n.type!=="small"&&n.type!=="start")return false;
+            if(n.type==="start")return false; // exclude start from depletion count
+            if(n.type!=="small")return false;
             return Math.hypot(n.x-hcx2,n.y-hcy2)<=R+2;
           });
           var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
@@ -1272,7 +1275,7 @@ function FishGame(){
                   <div style={{display:"flex",gap:4}}>{diceValues.map(function(v,i){return <DiceFace key={i} value={v} size={44}/>;})}</div>
                   <span style={{fontSize:18,fontWeight:900,color:"#1B9E77",fontFamily:"'Noto Serif JP',serif"}}>{"Moves: "+ml}</span></div>)}
             </div>)}
-          {phase==="playing"&&players[cp]&&players[cp].position!==null&&(function(){var curPos=players[cp].position;var targets=[];players.forEach(function(pl,i){if(i===cp||pl.position===null)return;if(cn.indexOf(pl.position)>=0)return;var totalFish=pl.fish.reduce(function(a,b){return a+b;},0);if(totalFish===0)return;var dist=bfsDistance(curPos,pl.position,adj);targets.push({sym:PSYM[i],dist:dist,fish:pl.fish.slice(),totalFish:totalFish});});if(targets.length===0)return null;targets.sort(function(a,b){return a.dist-b.dist;});return <div style={{padding:8,borderBottom:"1px solid #d4c9b5",background:"#f5f0e8"}}><div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Nearby Ships</div>{targets.map(function(t,i){return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}><span style={{fontSize:12}}>{t.sym}</span><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{display:"flex",gap:2}}>{t.fish.map(function(c,fi){return c>0?<div key={fi} style={{display:"flex",alignItems:"center",gap:1}}><div style={{width:5,height:5,borderRadius:"50%",background:FISH[fi].color}}/><span style={{fontSize:8,fontWeight:600}}>{c}</span></div>:null;})}</div><span style={{fontSize:11,fontWeight:900,color:t.dist<=6?"#D64045":t.dist<=12?"#E8A838":"#8a7a6a"}}>{t.dist+" moves"}</span></div></div>;})}</div>;})()}
+          {phase==="playing"&&players[cp]&&players[cp].position!==null&&(function(){var curPos=players[cp].position;var targets=[];players.forEach(function(pl,i){if(i===cp||pl.position===null)return;if(cn.indexOf(pl.position)>=0)return;var totalFish=pl.fish.reduce(function(a,b){return a+b;},0);if(totalFish===0)return;var citySet2={};cn.forEach(function(c){citySet2[c]=true;});var dist=bfsDistance(curPos,pl.position,adj,citySet2);targets.push({sym:PSYM[i],dist:dist,fish:pl.fish.slice(),totalFish:totalFish});});if(targets.length===0)return null;targets.sort(function(a,b){return a.dist-b.dist;});return <div style={{padding:8,borderBottom:"1px solid #d4c9b5",background:"#f5f0e8"}}><div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:4}}>Nearby Ships</div>{targets.map(function(t,i){return <div key={i} style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"4px 6px",marginBottom:2,borderRadius:3,background:"#e8dcc8"}}><span style={{fontSize:12}}>{t.sym}</span><div style={{display:"flex",alignItems:"center",gap:6}}><div style={{display:"flex",gap:2}}>{t.fish.map(function(c,fi){return c>0?<div key={fi} style={{display:"flex",alignItems:"center",gap:1}}><div style={{width:5,height:5,borderRadius:"50%",background:FISH[fi].color}}/><span style={{fontSize:8,fontWeight:600}}>{c}</span></div>:null;})}</div><span style={{fontSize:11,fontWeight:900,color:t.dist<=6?"#D64045":t.dist<=12?"#E8A838":"#8a7a6a"}}>{t.dist+" moves"}</span></div></div>;})}</div>;})()}
           <div style={{flex:1,overflow:"auto",padding:8}}>
             <div style={{fontSize:9,color:"#8a7a6a",textTransform:"uppercase",letterSpacing:1,marginBottom:8}}>Species Guide</div>
             {FISH.map(function(ft,i){var wild=0;nodes.forEach(function(n){if(fm[n.id]===i)wild++;});var caught=0;players.forEach(function(p){caught+=p.fish[i];});var sold=0;cn.forEach(function(cid){var del=cd[cid]&&cd[cid][i]?cd[cid][i]:{};Object.values(del).forEach(function(v){sold+=v;});});var totalWild=0;nodes.forEach(function(n){if(fm[n.id]!==null&&fm[n.id]!==undefined)totalWild++;});var pct=totalWild>0?Math.round(wild/totalWild*100):0;var rarityLabel=pct>=25?"Common":pct>=15?"Uncommon":pct>=8?"Scarce":pct>=3?"Rare":"Legendary";return <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:8,padding:6,background:"#f5f0e8",borderRadius:4,border:"1px solid #d4c9b5"}}><img src={FISH_IMG[i]} width={40} height={40} style={{borderRadius:4,border:"2px solid "+ft.color+"60"}}/><div style={{flex:1}}><div style={{fontSize:12,fontWeight:700,color:"#1a1a1a"}}>{ft.name}</div><div style={{fontSize:9,color:"#8a7a6a",marginTop:2}}><span style={{color:ft.color,fontWeight:600}}>{"Wild: "+wild}</span><span style={{marginLeft:6}}>{"Caught: "+caught}</span><span style={{marginLeft:6}}>{"Sold: "+sold}</span></div><div style={{fontSize:8,color:"#aaa",marginTop:1}}>{rarityLabel+" ("+pct+"% of wild)"}</div></div></div>;})}
