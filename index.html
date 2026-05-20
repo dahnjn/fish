@@ -466,9 +466,15 @@ function PlayerAnim(props){
   var op=active?0.95:0.65, sw=active?1.6:1.0, spd=active?2:5;
   var C="#1a1a1a", R1=18, R2=12;
   var innerFill=active?C:"none";
-  // Active player gets a large colored halo, idle players get a subtle golden glow
+  // Active player gets a large colored halo, idle players get arrows pointing at them
   var haloColors=["#D6404540","#3A86C840","#1B9E7740","#E8A83840"];
-  var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <circle cx={x} cy={y} r={24} fill="#E8A83830" stroke="#E8A838" strokeWidth={0.8} opacity={0.6}/>;
+  var arrowDist=40;
+  var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <g>
+    <polygon points={(x)+","+(y-arrowDist+8)+" "+(x-5)+","+(y-arrowDist)+" "+(x+5)+","+(y-arrowDist)} fill="#E8A838" opacity={0.7}/>
+    <polygon points={(x)+","+(y+arrowDist-8)+" "+(x-5)+","+(y+arrowDist)+" "+(x+5)+","+(y+arrowDist)} fill="#E8A838" opacity={0.7}/>
+    <polygon points={(x-arrowDist+8)+","+y+" "+(x-arrowDist)+","+(y-5)+" "+(x-arrowDist)+","+(y+5)} fill="#E8A838" opacity={0.7}/>
+    <polygon points={(x+arrowDist-8)+","+y+" "+(x+arrowDist)+","+(y-5)+" "+(x+arrowDist)+","+(y+5)} fill="#E8A838" opacity={0.7}/>
+  </g>;
 
   if(pid===0){
     var circles1=[];for(var i=0;i<6;i++){var a=i*Math.PI*2/6;circles1.push(<circle key={i} cx={x+R1*Math.cos(a)} cy={y+R1*Math.sin(a)} r={2.2} fill={active?C:"none"} stroke={C} strokeWidth={sw} opacity={op}/>);}
