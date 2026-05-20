@@ -270,7 +270,7 @@ function buildBoard(blitz){
   ar.forEach(function(n,ri){
     var f=-1,j;
     for(j=0;j<nodes.length;j++){if(dst([n.x,n.y],[nodes[j].x,nodes[j].y])<2){f=j;if(n.type==="city")nodes[j].type="city";break;}}
-    if(f>=0)mm.set(ri,f);else{mm.set(ri,nodes.length);nodes.push({x:n.x,y:n.y,type:n.type,hi:n.hi,id:nodes.length});}
+    if(f>=0){mm.set(ri,f);if(nodes[f].hexes.indexOf(n.hi)<0)nodes[f].hexes.push(n.hi);}else{mm.set(ri,nodes.length);nodes.push({x:n.x,y:n.y,type:n.type,hi:n.hi,id:nodes.length,hexes:[n.hi]});}
   });
   var bcx=W,bcy=1.5*R,si=-1,sd=Infinity;
   nodes.forEach(function(n,i){var d=dst([n.x,n.y],[bcx,bcy]);if(d<sd&&n.type!=="city"){sd=d;si=i;}});
@@ -327,13 +327,13 @@ function buildBoard(blitz){
     // Add all 8 diamond nodes
     corners.forEach(function(c) {
       var nid = nodes.length;
-      nodes.push({x:c[0],y:c[1],type:"diamond",hi:-1,id:nid});
+      nodes.push({x:c[0],y:c[1],type:"diamond",hi:-1,id:nid,hexes:[-1]});
       dNodes.push(nid);
       diamondNodeIds.push(nid);
     });
     mids.forEach(function(m) {
       var nid = nodes.length;
-      nodes.push({x:m[0],y:m[1],type:"diamond",hi:-1,id:nid});
+      nodes.push({x:m[0],y:m[1],type:"diamond",hi:-1,id:nid,hexes:[-1]});
       dNodes.push(nid);
       diamondNodeIds.push(nid);
     });
@@ -887,53 +887,40 @@ function FishGame(){
         p.fish[ft]++;
       }
       nf[nId]=null;
-      // Check hex depletion
+      // Check hex depletion for each hex this node belongs to
       if(node.type==="small"||node.type==="start"){
-        var bestHi=-1,bestHiDist=Infinity;
-        for(var hi2=0;hi2<8;hi2++){
-          var hd=Math.hypot(node.x-HC[hi2][0],node.y-HC[hi2][1]);
-          if(hd<bestHiDist){bestHiDist=hd;bestHi=hi2;}
-        }
-        if(bestHi>=0){
-          // Only count nodes whose NEAREST hex is this one (avoids shared edge nodes blocking depletion)
-          var hexNodes=nodes.filter(function(n){
-            if(n.type==="start"||n.type!=="small")return false;
-            var ch=-1,cd2=Infinity;
-            for(var h3=0;h3<8;h3++){var d3=Math.hypot(n.x-HC[h3][0],n.y-HC[h3][1]);if(d3<cd2){cd2=d3;ch=h3;}}
-            return ch===bestHi;
+        var nodeHexes=node.hexes||[node.hi];
+        nodeHexes.forEach(function(checkHi){
+          // Find all small nodes that belong to this hex
+          var hexMembers=nodes.filter(function(n){
+            if(n.type!=="small")return false;
+            return(n.hexes||[n.hi]).indexOf(checkHi)>=0;
           });
-          var allEmpty=hexNodes.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
-          if(allEmpty&&hexNodes.length>0){
-            // Repopulate ALL nodes within R+2 (including shared edges)
-            var repopNodes=nodes.filter(function(n){
-              if(n.type!=="small")return false;
-              return Math.hypot(n.x-HC[bestHi][0],n.y-HC[bestHi][1])<=R+2;
-            });
-            var repopType=bestHi;
+          var allEmpty=hexMembers.every(function(n){return nf[n.id]===null||nf[n.id]===undefined;});
+          if(allEmpty&&hexMembers.length>0){
+            // Repopulate all member nodes
+            var rType=checkHi;
             if(mapType==="championship"){
-              var champRepop={0:2,7:0,2:3,5:1,3:5,4:5};
-              if(champRepop[repopType]!==undefined){
-                repopNodes.forEach(function(n){if(Math.random()<0.05)nf[n.id]=4;else nf[n.id]=champRepop[repopType];});
-              }else{
-                repopNodes.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});
-              }
+              var cr2={0:2,7:0,2:3,5:1,3:5,4:5};
+              if(cr2[rType]!==undefined){hexMembers.forEach(function(n){if(Math.random()<0.05)nf[n.id]=4;else nf[n.id]=cr2[rType];});}
+              else{hexMembers.forEach(function(n){if(Math.random()<0.15)nf[n.id]=5;else nf[n.id]=rndFish();});}
             }else if(mapType==="provinces"){
-              var provRepop={0:0,2:4,5:3,7:1};
-              if(provRepop[repopType]!==undefined){repopNodes.forEach(function(n){nf[n.id]=provRepop[repopType];});}
-              else{repopNodes.forEach(function(n){nf[n.id]=rndFish();});}
+              var pr2={0:0,2:4,5:3,7:1};
+              if(pr2[rType]!==undefined){hexMembers.forEach(function(n){nf[n.id]=pr2[rType];});}
+              else{hexMembers.forEach(function(n){nf[n.id]=rndFish();});}
             }else if(mapType==="cod"){
-              var codRepop={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
-              if(codRepop[repopType]!==undefined){repopNodes.forEach(function(n){nf[n.id]=codRepop[repopType];});}
-              else{repopNodes.forEach(function(n){nf[n.id]=rndFish();});}
+              var cdr2={0:0,1:1,2:2,3:5,4:5,5:3,6:4,7:1};
+              if(cdr2[rType]!==undefined){hexMembers.forEach(function(n){nf[n.id]=cdr2[rType];});}
+              else{hexMembers.forEach(function(n){nf[n.id]=rndFish();});}
             }else if(mapType==="monoculture"){
-              var cts2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)cts2[nf[n2.id]]++;});
-              var dom2=0;for(var di3=1;di3<5;di3++){if(cts2[di3]>cts2[dom2])dom2=di3;}
-              repopNodes.forEach(function(n){nf[n.id]=dom2;});
+              var ct2=[0,0,0,0,0];nodes.forEach(function(n2){if(nf[n2.id]!==null&&nf[n2.id]!==undefined&&nf[n2.id]<5)ct2[nf[n2.id]]++;});
+              var dm2=0;for(var d3=1;d3<5;d3++){if(ct2[d3]>ct2[dm2])dm2=d3;}
+              hexMembers.forEach(function(n){nf[n.id]=dm2;});
             }else{
-              repopNodes.forEach(function(n){nf[n.id]=rndFish();});
+              hexMembers.forEach(function(n){nf[n.id]=rndFish();});
             }
           }
-        }
+        });
       }
       // Diamond depletion: if all 8 nodes in this diamond are empty, level up and refill
       if(node.type==="diamond"){
