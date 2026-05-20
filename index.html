@@ -472,10 +472,10 @@ function PlayerAnim(props){
   var aw=10; // arrow width
   var al=16; // arrow length
   var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <g>
-    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#D64045" opacity={0.9}/>
-    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#D64045" opacity={0.9}/>
-    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#D64045" opacity={0.9}/>
-    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#D64045" opacity={0.9}/>
+    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#1a1a1a" opacity={0.85}/>
+    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#1a1a1a" opacity={0.85}/>
+    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#1a1a1a" opacity={0.85}/>
+    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#1a1a1a" opacity={0.85}/>
   </g>;
 
   if(pid===0){
@@ -1226,7 +1226,7 @@ function FishGame(){
                 {isActive&&tp==="roll"&&<g>
                   <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" repeatCount="indefinite"/></circle>
                   <circle cx={nd.x} cy={nd.y} r={35} fill="none" stroke="#D64045" strokeWidth={2} opacity={0.8}><animate attributeName="r" values="35;55" dur="1.5s" begin="0.5s" repeatCount="indefinite"/><animate attributeName="opacity" values="0.8;0" dur="1.5s" begin="0.5s" repeatCount="indefinite"/></circle>
-                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#D64045" opacity={0.9}><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/></polygon>
+                  <polygon points={(nd.x)+","+(nd.y-40)+" "+(nd.x-6)+","+(nd.y-50)+" "+(nd.x+6)+","+(nd.y-50)} fill="#1a1a1a" opacity={0.85}><animate attributeName="opacity" values="0.9;0.3;0.9" dur="1s" repeatCount="indefinite"/></polygon>
                 </g>}
               </g>;})}
           </svg>
