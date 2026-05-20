@@ -468,12 +468,14 @@ function PlayerAnim(props){
   var innerFill=active?C:"none";
   // Active player gets a large colored halo, idle players get arrows pointing at them
   var haloColors=["#D6404540","#3A86C840","#1B9E7740","#E8A83840"];
-  var arrowDist=40;
+  var arrowDist=50;
+  var aw=10; // arrow width
+  var al=16; // arrow length
   var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <g>
-    <polygon points={(x)+","+(y-arrowDist+8)+" "+(x-5)+","+(y-arrowDist)+" "+(x+5)+","+(y-arrowDist)} fill="#E8A838" opacity={0.7}/>
-    <polygon points={(x)+","+(y+arrowDist-8)+" "+(x-5)+","+(y+arrowDist)+" "+(x+5)+","+(y+arrowDist)} fill="#E8A838" opacity={0.7}/>
-    <polygon points={(x-arrowDist+8)+","+y+" "+(x-arrowDist)+","+(y-5)+" "+(x-arrowDist)+","+(y+5)} fill="#E8A838" opacity={0.7}/>
-    <polygon points={(x+arrowDist-8)+","+y+" "+(x+arrowDist)+","+(y-5)+" "+(x+arrowDist)+","+(y+5)} fill="#E8A838" opacity={0.7}/>
+    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#D64045" opacity={0.9}/>
+    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#D64045" opacity={0.9}/>
+    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#D64045" opacity={0.9}/>
+    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#D64045" opacity={0.9}/>
   </g>;
 
   if(pid===0){
