@@ -472,10 +472,10 @@ function PlayerAnim(props){
   var aw=10; // arrow width
   var al=16; // arrow length
   var halo = active ? <circle cx={x} cy={y} r={30} fill={haloColors[pid]||"#00000020"} stroke="none" style={{animation:"glow 1.5s ease-in-out infinite"}}/> : <g>
-    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#888888" opacity={0.7}/>
-    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#888888" opacity={0.7}/>
-    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#888888" opacity={0.7}/>
-    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#888888" opacity={0.7}/>
+    <polygon points={(x)+","+(y-arrowDist+al)+" "+(x-aw)+","+(y-arrowDist)+" "+(x+aw)+","+(y-arrowDist)} fill="#888888" opacity={0.5} strokeWidth={1} stroke="#888888"/>
+    <polygon points={(x)+","+(y+arrowDist-al)+" "+(x-aw)+","+(y+arrowDist)+" "+(x+aw)+","+(y+arrowDist)} fill="#888888" opacity={0.5} strokeWidth={1} stroke="#888888"/>
+    <polygon points={(x-arrowDist+al)+","+y+" "+(x-arrowDist)+","+(y-aw)+" "+(x-arrowDist)+","+(y+aw)} fill="#888888" opacity={0.5} strokeWidth={1} stroke="#888888"/>
+    <polygon points={(x+arrowDist-al)+","+y+" "+(x+arrowDist)+","+(y-aw)+" "+(x+arrowDist)+","+(y+aw)} fill="#888888" opacity={0.5} strokeWidth={1} stroke="#888888"/>
   </g>;
 
   if(pid===0){
@@ -553,6 +553,7 @@ function FishGame(){
   var bd=useMemo(function(){return buildBoard(blitzMode);},[blitzMode]);
   var nodes=bd.nodes, el=bd.el, adj=bd.adj, diamondNodeIds=bd.diamondNodeIds||[];
   var [fm,setFm]=useState({});
+  var fmRef=useRef({});
   var [players,setPlayers]=useState([]);
   var [cp,setCp]=useState(0);
   var [cr,setCr]=useState(1);
@@ -570,6 +571,7 @@ function FishGame(){
   var pr=useRef({sx:0,sy:0,ox:0,oy:0});
   var animRef=useRef(null);
   var [eventAnim,setEventAnim]=useState(null);
+  useEffect(function(){fmRef.current=fm;},[fm]);
   var [priceIdx,setPriceIdx]=useState(0);
   useEffect(function(){var t=setInterval(function(){setPriceIdx(function(p){return(p+1)%5;});},1500);return function(){clearInterval(t);};},[]);
   var [diamondLevels,setDiamondLevels]=useState([1,1,1,1]); // level per diamond (1,2,3...)
@@ -872,7 +874,7 @@ function FishGame(){
     pushHistory();
     var newPath=sp.concat([nId]);setSp(newPath);
     var np=players.slice();var p=Object.assign({},np[cp]);p.position=nId;
-    var node=nodes[nId];var nf=Object.assign({},fm);
+    var node=nodes[nId];var nf=Object.assign({},fmRef.current);
     var nd=JSON.parse(JSON.stringify(cd));var ended=false;
     if(nf[nId]!==undefined&&nf[nId]!==null&&(node.type==="small"||node.type==="diamond"||node.type==="start")){
       var ft=nf[nId];p.fish=p.fish.slice();
@@ -986,7 +988,7 @@ function FishGame(){
         setEventAnim({type:"sell",city:CFULL[cityIdx],fishCounts:soldCounts,value:saleValue,codCount:codCount,bycatch:bycatchCount});
       }
       p.fish=[0,0,0,0,0,0];ended=true;setCd(nd);}
-    np[cp]=p;setPlayers(np);setFm(nf);var newMl=ml-1;setMl(newMl);if(ended||newMl<=0)doEndTurn(np,ended?2400:300);
+    np[cp]=p;setPlayers(np);fmRef.current=nf;setFm(nf);var newMl=ml-1;setMl(newMl);if(ended||newMl<=0)doEndTurn(np,ended?2400:300);
   }
 
   var fs=useMemo(function(){
